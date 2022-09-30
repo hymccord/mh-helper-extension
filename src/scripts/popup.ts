@@ -1,3 +1,5 @@
+import browser from "webextension-polyfill";
+
 // JS script available only within the pop-up html pages (popup.html & popup2.html)
 /**
  * Query the open tabs and locate the MH tabs. Passes the first result to the callback, along with the invoking button.
@@ -5,15 +7,14 @@
  * @param {string} [button_id] the HTML id of the pressed button, to be forwarded to callback
  * @param {boolean} [silent] if true, errors will not be displayed to the user.
  */
-function findOpenMHTab(callback, button_id, silent) {
-    chrome.tabs.query({'url': ['*://www.mousehuntgame.com/*', '*://apps.facebook.com/mousehunt/*']}, tabs => {
-        if (tabs.length > 0) {
-            callback(tabs[0].id, button_id);
-        }
-        else if (!silent) {
-            displayErrorPopup("Please navigate to MouseHunt page first.");
-        }
-    });
+async function findOpenMHTab(callback: (tabId : number, buttonId : string | null) => void, button_id: string | null, silent?: boolean): Promise<void> {
+    const tabs = await browser.tabs.query({'url': ['*://www.mousehuntgame.com/*', '*://apps.facebook.com/mousehunt/*']});
+    if (tabs.length > 0 && tabs[0].id != undefined) {
+        callback(tabs[0].id, button_id);
+    }
+    else if (!silent) {
+        displayErrorPopup("Please navigate to MouseHunt page first.");
+    }
 }
 
 /**
@@ -22,21 +23,22 @@ function findOpenMHTab(callback, button_id, silent) {
  * @param {number} tab_id The tab ID of the MH page
  * @param {string} button_id The HTML element ID of the button that was clicked
  */
-function sendMessageToScript(tab_id, button_id) {
+async function sendMessageToScript(tab_id: number, button_id: string | null): Promise<void> {
     // Switch to MH tab if needed.
     const needsMHPageActive = ['horn', 'tsitu_loader', 'mhmh', 'ryonn'];
-    if (needsMHPageActive.includes(button_id)) {
-        chrome.tabs.update(tab_id, {'active': true});
+    if (button_id !== null && needsMHPageActive.includes(button_id)) {
+        await browser.tabs.update(tab_id, {'active': true});
     }
 
     // Send message to content script
-    chrome.tabs.sendMessage(tab_id, {mhct_link: button_id});
+    browser.tabs.sendMessage(tab_id, {mhct_link: button_id});
 }
 
 document.addEventListener('DOMContentLoaded', () => {
     const version_element = document.getElementById("version");
+
     if (version_element) {
-        version_element.innerText = ` version: ${chrome.runtime.getManifest().version}`;
+        version_element.innerText = ` version: ${browser.runtime.getManifest().version}`;
     }
     // Schedule updates of the horn timer countdown.
     findOpenMHTab(tab => {
@@ -57,12 +59,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const options_button = document.getElementById('options_button');
     if (options_button) {
         options_button.addEventListener('click', () => {
-            if (chrome.runtime.openOptionsPage) {
+            if (browser.runtime.openOptionsPage) {
                 // New way to open options pages, if supported (Chrome 42+).
-                chrome.runtime.openOptionsPage();
+                browser.runtime.openOptionsPage();
             } else {
                 // Reasonable fallback.
-                window.open(chrome.runtime.getURL('options.html'));
+                window.open(browser.runtime.getURL('options.html'));
             }
         });
     }
@@ -73,27 +75,31 @@ document.addEventListener('DOMContentLoaded', () => {
  * @param {number} tab The tab id of the MH page
  * @param {HTMLElement} [huntTimerField] The div element corresponding to the horn countdown timer.
  */
-function updateHuntTimerField(tab, huntTimerField) {
-    chrome.tabs.sendMessage(tab, {mhct_link: "huntTimer"}, response => {
-        if (chrome.runtime.lastError) {
-            displayErrorPopup(chrome.runtime.lastError.message);
+async function updateHuntTimerField(tab: number, huntTimerField: HTMLElement | null): Promise<void> {
+    const response : any = await browser.tabs.sendMessage(tab, {mhct_link: "huntTimer"});
+    if (browser.runtime.lastError) {
+        displayErrorPopup(browser.runtime.lastError.message ?? "");
+    }
+    if (huntTimerField) {
+        if (response === "Ready!") {
+            huntTimerField.innerHTML = '<img src="images/horn.png" class="horn">';
+        } else {
+            huntTimerField.textContent = response;
         }
-        if (huntTimerField) {
-            if (response === "Ready!") {
-                huntTimerField.innerHTML = '<img src="images/horn.png" class="horn">';
-            } else {
-                huntTimerField.textContent = response;
-            }
-        }
-    });
+    }
 }
 
 /**
  * Display the associated message
  * @param {string} message The message to display
  */
-function displayErrorPopup(message) {
+function displayErrorPopup(message: string): void {
     const error_popup = document.getElementById('error_popup');
+
+    if (error_popup === null) {
+        return;
+    }
+
     error_popup.innerText = message;
     error_popup.style.display = 'block';
     setTimeout(() => error_popup.style.display = 'none', 2000);

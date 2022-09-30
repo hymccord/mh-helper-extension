@@ -11,7 +11,7 @@ module.exports = {
         content: path.join(srcScripts, 'content.js'),
         main: path.join(srcScripts, 'main.js'),
         options: path.join(srcScripts, 'options.js'),
-        popup: path.join(srcScripts, 'popup.js'),
+        popup: path.join(srcScripts, 'popup.ts'),
     },
     output: {
         path: outpath,
