@@ -1,5 +1,6 @@
 import browser from 'webextension-polyfill';
-import { Options } from './constants';
+import {ExtensionMessage, Options} from './common';
+import {getSettings} from './utils';
 
 // Pass version # from manifest to injected script
 const extension_version = document.createElement("input");
@@ -23,27 +24,31 @@ mhhh_flash_message_div.setAttribute(
     "box-shadow: 0 0 10px 1px black;");
 document.body.appendChild(mhhh_flash_message_div);
 
-// Inject main script
+// Inject script to intercept ajax events
 const s = document.createElement('script');
-s.src = browser.runtime.getURL('scripts/main.js');
+s.src = browser.runtime.getURL('scripts/intercept.js');
 (document.head || document.documentElement).appendChild(s);
-s.onload = async () => {
-    // Display Tsitu's Loader
-    const items: Record<string, any> = await browser.storage.sync.get({
-        tsitu_loader_on: false,
-        tsitu_loader_offset: 80,
-    });
-        
-    if (items.tsitu_loader_on) {
-        // There must be a better way of doing this
-        window.postMessage({
-            "mhct_message": 'tsitu_loader',
-            "tsitu_loader_offset": items.tsitu_loader_offset,
-            "file_link": browser.runtime.getURL('third_party/tsitu/bm-menu.min.js'),
-        }, "*");
-    }
+s.onload = async function() {
     s.remove();
 };
+
+// s.onload = async () => {
+//     // Display Tsitu's Loader
+//     const items: Record<string, any> = await browser.storage.sync.get({
+//         tsitu_loader_on: false,
+//         tsitu_loader_offset: 80,
+//     });
+        
+//     if (items.tsitu_loader_on) {
+//         // There must be a better way of doing this
+//         window.postMessage({
+//             "mhct_message": 'tsitu_loader',
+//             "tsitu_loader_offset": items.tsitu_loader_offset,
+//             "file_link": browser.runtime.getURL('third_party/tsitu/bm-menu.min.js'),
+//         }, "*");
+//     }
+//     s.remove();
+// };
 
 // Handles messages from popup or background.
 browser.runtime.onMessage.addListener((request: any, sender: browser.Runtime.MessageSender) => {
@@ -88,13 +93,13 @@ window.addEventListener("message",
             const settings = await getSettings();
             if (event.source instanceof Window) {
                 event.source.postMessage({
-                "mhct_settings_response": 1,
-                "settings": settings,
-            }, event.origin);
+                    "mhct_settings_response": 1,
+                    "settings": settings,
+                }, event.origin);
             }
         } else if (data.mhct_crown_update === 1) {
             data.origin = event.origin;
-            let wasSubmitted: number | boolean = await browser.runtime.sendMessage(data);
+            const wasSubmitted: number | boolean = await browser.runtime.sendMessage(data);
             if (event.source instanceof Window) {
                 event.source.postMessage({
                     mhct_message: 'crownSubmissionStatus',
@@ -106,7 +111,7 @@ window.addEventListener("message",
             browser.runtime.sendMessage({"log": data});
         } else if (data.mhct_golem_submit === 1) {
             data.origin = event.origin;
-            let wasSubmitted: number | boolean = await browser.runtime.sendMessage(data);
+            const wasSubmitted: number | boolean = await browser.runtime.sendMessage(data);
             if (event.source instanceof Window) {
                 event.source.postMessage({
                     mhct_message: 'golemSubmissionStatus',
@@ -120,29 +125,17 @@ window.addEventListener("message",
     false
 );
 
-/**
- * Promise to get the extension's settings.
- * @returns {Promise <Options>} The extension's settings
- */
-export async function getSettings(): Promise<Options> {
-    let items = await browser.storage.sync.get({
-        success_messages: true, // defaults
-        error_messages: true, // defaults
-        debug_logging: false, // defaults
-        icon_timer: true, // defaults
-        horn_sound: false, // defaults
-        custom_sound: '', // defaults
-        horn_volume: 100, // defaults
-        horn_alert: false, // defaults
-        horn_webalert: false, // defaults
-        horn_popalert: false, // defaults
-        tracking_enabled: true, // defaults
-        escape_button_close: false, // defaults
-    }) as Options;
-
-    if (browser.runtime.lastError) {
-        window.console.error(browser.runtime.lastError.message);
+window.addEventListener('message', function(event: MessageEvent<ExtensionMessage | undefined>) {
+    // Only accept message from same frame
+    if (event.source !== window) {
+        return;
     }
 
-    return items || {};
-}
+    const message = event.data;
+    // Only accept our messages
+    if (message?.source !== 'mhct-helper-extension') {
+        return;
+    }
+
+    browser.runtime.sendMessage(message);
+});

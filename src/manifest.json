@@ -25,17 +25,23 @@
     "content_scripts": [{
         "all_frames" : true,
         "matches": ["*://www.mousehuntgame.com/*"],
-        "js": ["scripts/content.js"]
+        "js": [
+            "scripts/content.js",
+            "scripts/main.js"
+        ]
     }],
 
     "web_accessible_resources": [
-        "scripts/main.js",
+        "scripts/intercept.js",
         "third_party/tsitu/*",
         "images/icon128.png"
     ],
 
     "background": {
-        "scripts": ["scripts/background.js"]
+        "scripts": [
+            "scripts/background.js",
+            "scripts/worker.js"
+        ]
     },
 
     "options_ui": {

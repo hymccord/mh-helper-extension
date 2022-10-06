@@ -9,9 +9,11 @@ module.exports = {
     entry: {
         background: path.join(srcScripts, 'background.js'),
         content: path.join(srcScripts, 'content.ts'),
+        intercept: path.join(srcScripts, 'intercept.ts'),
         main: path.join(srcScripts, 'main.js'),
         options: path.join(srcScripts, 'options.js'),
         popup: path.join(srcScripts, 'popup.ts'),
+        worker: path.join(srcScripts, 'worker.ts'),
     },
     output: {
         path: outpath,

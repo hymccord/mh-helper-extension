@@ -50,7 +50,10 @@
     "url": "git+https://github.com/mh-community-tools/mh-helper-extension.git"
   },
   "devDependencies": {
+    "@types/jquery": "^3.5.14",
     "@types/webextension-polyfill": "^0.9.1",
+    "@typescript-eslint/eslint-plugin": "^5.38.1",
+    "@typescript-eslint/parser": "^5.38.1",
     "concurrently": "^7.4.0",
     "copy-webpack-plugin": "^11.0.0",
     "eslint": "^8.24.0",

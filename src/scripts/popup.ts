@@ -7,10 +7,10 @@ import browser from "webextension-polyfill";
  * @param {string} [button_id] the HTML id of the pressed button, to be forwarded to callback
  * @param {boolean} [silent] if true, errors will not be displayed to the user.
  */
-async function findOpenMHTab(callback: (tabId : number, buttonId : string | null) => void, button_id: string | null, silent?: boolean): Promise<void> {
+async function findOpenMHTab(callback: (tabId : number, buttonId : string | null) => Promise<void>, button_id: string | null, silent?: boolean): Promise<void> {
     const tabs = await browser.tabs.query({'url': ['*://www.mousehuntgame.com/*', '*://apps.facebook.com/mousehunt/*']});
     if (tabs.length > 0 && tabs[0].id != undefined) {
-        callback(tabs[0].id, button_id);
+        void callback(tabs[0].id, button_id);
     }
     else if (!silent) {
         displayErrorPopup("Please navigate to MouseHunt page first.");
@@ -31,27 +31,33 @@ async function sendMessageToScript(tab_id: number, button_id: string | null): Pr
     }
 
     // Send message to content script
-    browser.tabs.sendMessage(tab_id, {mhct_link: button_id});
+    void browser.tabs.sendMessage(tab_id, {mhct_link: button_id});
 }
 
 document.addEventListener('DOMContentLoaded', () => {
     const version_element = document.getElementById("version");
-
+    const loop = true;
     if (version_element) {
         version_element.innerText = ` version: ${browser.runtime.getManifest().version}`;
     }
     // Schedule updates of the horn timer countdown.
-    findOpenMHTab(tab => {
-        const huntTimerField = document.getElementById("huntTimer");
-        updateHuntTimerField(tab, huntTimerField); // Fire now
-        setInterval(updateHuntTimerField, 1000, tab, huntTimerField); // Continue firing each second
+    void findOpenMHTab(async tab => {
+        while (loop) {
+            const huntTimerField = document.getElementById("huntTimer");
+            await updateHuntTimerField(tab, huntTimerField); // Fire now
+            await new Promise(resolve => setTimeout(resolve, 1000));
+        }
     }, null, true);
 
     // Send specific clicks to the content script for handling and/or additional forwarding.
     ['mhmh', 'userhistory', 'ryonn', 'horn', 'tsitu_loader'].forEach(id => {
         const button_element = document.getElementById(id);
         if (button_element) {
-            button_element.addEventListener('click', () => findOpenMHTab(sendMessageToScript, id));
+            button_element.addEventListener('click', () => {
+                void (async () => {
+                    await findOpenMHTab(sendMessageToScript, id);
+                })();
+            });
         }
     });
 
@@ -61,7 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
         options_button.addEventListener('click', () => {
             if (browser.runtime.openOptionsPage) {
                 // New way to open options pages, if supported (Chrome 42+).
-                browser.runtime.openOptionsPage();
+                void browser.runtime.openOptionsPage();
             } else {
                 // Reasonable fallback.
                 window.open(browser.runtime.getURL('options.html'));
@@ -75,12 +81,12 @@ document.addEventListener('DOMContentLoaded', () => {
  * @param {number} tab The tab id of the MH page
  * @param {HTMLElement} [huntTimerField] The div element corresponding to the horn countdown timer.
  */
-async function updateHuntTimerField(tab: number, huntTimerField: HTMLElement | null): Promise<void> {
-    const response : any = await browser.tabs.sendMessage(tab, {mhct_link: "huntTimer"});
+async function updateHuntTimerField(tab: number, huntTimerField: HTMLElement | null) {
+    const response: unknown = await browser.tabs.sendMessage(tab, {mhct_link: "huntTimer"});
     if (browser.runtime.lastError) {
         displayErrorPopup(browser.runtime.lastError.message ?? "");
     }
-    if (huntTimerField) {
+    if (huntTimerField && typeof response === 'string') {
         if (response === "Ready!") {
             huntTimerField.innerHTML = '<img src="images/horn.png" class="horn">';
         } else {
@@ -104,3 +110,5 @@ function displayErrorPopup(message: string): void {
     error_popup.style.display = 'block';
     setTimeout(() => error_popup.style.display = 'none', 2000);
 }
+
+export default {};

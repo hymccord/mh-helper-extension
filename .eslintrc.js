@@ -1,10 +1,11 @@
 module.exports = {
+    root: true,
     env: {
         browser: true,
         es2017: true,
         webextensions: true,
     },
-    extends: "eslint:recommended",
+    extends: 'eslint:recommended',
     globals: {
         $: 'readonly',
         user: 'readonly',
@@ -12,6 +13,7 @@ module.exports = {
     },
     parserOptions: {
         ecmaVersion: 12,
+        sourceType: 'module',
     },
     rules: {
         'array-bracket-newline': ['error', 'consistent'],
@@ -32,7 +34,7 @@ module.exports = {
         'no-unneeded-ternary': ['error'],
         'no-unused-vars': [
             'error',
-            { args: 'none' },
+            {args: 'none'},
         ],
         'no-var': ['warn'],
         'object-curly-spacing': ['error', 'never'],
@@ -40,4 +42,21 @@ module.exports = {
         'prefer-const': ['error'],
         'semi': ['error', 'always'],
     },
+    overrides: [
+        {
+            // https://github.com/typescript-eslint/typescript-eslint/blob/main/docs/linting/TYPED_LINTING.md
+            files: [ '**/*.ts' ],
+            parser: '@typescript-eslint/parser',
+            parserOptions: {
+                tsconfigRootDir: __dirname,
+                project: [ './tsconfig.json' ],
+            },
+            plugins: [ '@typescript-eslint' ],
+            extends: [
+                'eslint:recommended',
+                // 'plugin:@typescript-eslint/recommended',
+                // 'plugin:@typescript-eslint/recommended-requiring-type-checking',
+            ],
+        },
+    ],
 };

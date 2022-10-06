@@ -1,21 +1,24 @@
+/* eslint-disable indent */
 /*jslint browser:true */
+import {submitConvertible} from './convertibles';
+import * as utils from './utils';
 
-(function () {
     'use strict';
 
     const base_domain_url = "https://www.mhct.win";
     const db_url = base_domain_url + "/intake.php";
     const map_intake_url = base_domain_url + "/map_intake.php";
-    const convertible_intake_url = base_domain_url + "/convertible_intake.php";
     const map_helper_url = base_domain_url + "/maphelper.php";
     const rh_intake_url = base_domain_url + "/rh_intake.php";
 
+    window.$ = window.$ || $;
+    window.jQuery = window.jQuery || $;
+
     if (!window.jQuery) {
         console.log("MHCT: Can't find jQuery, exiting.");
-        return;
     }
 
-    const mhhh_version = formatVersion($("#mhhh_version").val());
+    const mhhh_version = formatVersion(utils.getVersion());
 
     let debug_logging = false;
 
@@ -834,34 +837,6 @@
         }
 
         submitConvertible(convertible, items, response.user.user_id);
-    }
-
-    /**
-     * @typedef {Object} HgItem
-     * @property {number} id HitGrab's ID for this item
-     * @property {string} name HitGrab's display name for this item
-     * @property {number} quantity the number of this item received or opened
-     */
-
-    /**
-     * Helper function to submit opened items.
-     * @param {HgItem} convertible The item that was opened.
-     * @param {HgItem[]} items An array of items that were obtained by opening the convertible
-     * @param {string} user_id the user associated with the submission
-     */
-    function submitConvertible(convertible, items, user_id) {
-        const record = {
-            convertible: getItem(convertible),
-            items: items.map(getItem),
-            extension_version: mhhh_version,
-            asset_package_hash: Date.now(),
-            user_id,
-            entry_timestamp: Math.round(Date.now() / 1000),
-        };
-
-        // Send to database
-        if (debug_logging) {window.console.log({message: "MHCT: submitting convertible", record:record});}
-        sendMessageToServer(convertible_intake_url, record);
     }
 
     function sendMessageToServer(url, final_message) {
@@ -2411,7 +2386,7 @@
             };
         }
     }
-    
+
     /**
      * Report active augmentations and floor number
      * @param {Object <string, any>} message The message to be sent.
@@ -2536,21 +2511,6 @@
         }).filter(loot => loot);
     }
 
-    /**
-     * 
-     * @param {Object} item An object that looks like an item for convertibles. Has an id (or item_id), name, and quantity
-     * @returns {Object} An item with an id, name, and quantity
-     */
-    function getItem(item) {
-        return {
-            id: item.item_id || item.id,
-            name: item.name,
-            // type: item.type,
-            quantity: item.quantity,
-            // class: item.class || item.classification
-        };
-    }
-
     function pad(num, size) {
         let s = String(num);
         while (s.length < (size || 2)) {s = "0" + s;}
@@ -2613,36 +2573,37 @@
         });
     }
 
-    // Finish configuring the extension behavior.
-    getSettings(settings => {
-        if (settings.debug_logging) {
-            debug_logging = true;
-            console.log("MHCT: Debug mode activated!");
-            window.console.log({message: "MHCT: Initialized with settings", settings});
-        }
+    (async () => {
+        const settings = await utils.getSettings();
+        // Finish configuring the extension behavior.
+            if (settings.debug_logging) {
+                debug_logging = true;
+                console.log("MHCT: Debug mode activated!");
+                window.console.log({message: "MHCT: Initialized with settings", settings});
+            }
 
-        if (settings.escape_button_close) {
-            escapeButtonClose();
-        }
+            if (settings.escape_button_close) {
+                escapeButtonClose();
+            }
 
-        // If this page is a profile page, query the crown counts (if the user tracks crowns).
-        const profileAutoScan = () => {
-            const profile_RE = /profile.php\?snuid=(\w+)$/g; // "$" at regex end = only auto-fetch when AJAX route changing onto a plain profile page
-            const profile_RE_matches = document.URL.match(profile_RE);
-            if (profile_RE_matches !== null && profile_RE_matches.length) {
-                const profile_snuid = profile_RE_matches[0].replace("profile.php?snuid=", "");
+            // If this page is a profile page, query the crown counts (if the user tracks crowns).
+            const profileAutoScan = () => {
+                const profile_RE = /profile.php\?snuid=(\w+)$/g; // "$" at regex end = only auto-fetch when AJAX route changing onto a plain profile page
+                const profile_RE_matches = document.URL.match(profile_RE);
+                if (profile_RE_matches !== null && profile_RE_matches.length) {
+                    const profile_snuid = profile_RE_matches[0].replace("profile.php?snuid=", "");
 
-                // Form data directly in URL to distinguish it from a profile "King's Crowns" tab click
-                const crownUrl = `https://www.mousehuntgame.com/managers/ajax/pages/page.php?page_class=HunterProfile&page_arguments%5Btab%5D=kings_crowns&page_arguments%5Bsub_tab%5D=false&page_arguments%5Bsnuid%5D=${profile_snuid}&uh=${user.unique_hash}`;
+                    // Form data directly in URL to distinguish it from a profile "King's Crowns" tab click
+                    const crownUrl = `https://www.mousehuntgame.com/managers/ajax/pages/page.php?page_class=HunterProfile&page_arguments%5Btab%5D=kings_crowns&page_arguments%5Bsub_tab%5D=false&page_arguments%5Bsnuid%5D=${profile_snuid}&uh=${user.unique_hash}`;
 
-                $.post(crownUrl, "sn=Hitgrab&hg_is_ajax=1", null, "json")
+                    $.post(crownUrl, "sn=Hitgrab&hg_is_ajax=1", null, "json")
                     .fail(err => {
                         if (settings.debug_logging) {
                             window.console.log({message: `MHCT: Crown query failed for snuid=${profile_snuid}`, err});
                         }
                     });
-            }
-        };
+                }
+            };
 
         // Checks for route changes and then rescans for plain profiles
         const URLDiffCheck = () => {
@@ -2663,5 +2624,4 @@
             tempversion = "TEST version";
         }
         window.console.log("MHCT: " + tempversion + " loaded! Good luck!");
-    });
-}());
+    })();
