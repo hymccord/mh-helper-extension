@@ -3,7 +3,8 @@
 (function () {
     'use strict';
 
-    let base_domain_url = "https://www.mhct.win";
+    // eslint-disable-next-line no-undef
+    const base_domain_url = process.env.BACKEND_URL;
     const db_url = base_domain_url + "/intake.php";
     const map_intake_url = base_domain_url + "/map_intake.php";
     const convertible_intake_url = base_domain_url + "/convertible_intake.php";
