@@ -22,7 +22,7 @@ Requirements: Node v16 or newer installed.
 Run the following commands to install dependencies and start developing.  
 
 ```cmd
-npm install
+npm ci
 ```
 
 **Scripts**

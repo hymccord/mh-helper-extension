@@ -40,4 +40,12 @@ module.exports = {
         'prefer-const': ['error'],
         'semi': ['error', 'always'],
     },
+    overrides: [
+        {
+            files: ['webpack/*.js'],
+            env: {
+                node: true,
+            },
+        },
+    ],
 };
