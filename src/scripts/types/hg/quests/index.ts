@@ -15,6 +15,7 @@ import {questIceFortressSchema} from "./iceFortress";
 import {questLabyrinthSchema} from "./labyrinth";
 import {questLivingGardenSchema} from "./livingGarden";
 import {questLostCitySchema} from "./lostCity";
+import {questLunarNewYearLanternSchema} from "./lunarNewYear";
 import {questMousoleumSchema} from "./mousoleum";
 import {questMoussuPicchuSchema} from "./moussuPicchu";
 import {questPollutionOutbreakSchema} from "./toxicSpill";
@@ -49,6 +50,7 @@ export const questsSchema = z.object({
     QuestLabyrinth: questLabyrinthSchema.optional(),
     QuestLivingGarden: questLivingGardenSchema.optional(),
     QuestLostCity: questLostCitySchema.optional(),
+    QuestLunarNewYearLantern: questLunarNewYearLanternSchema.optional(),
     QuestMousoleum: questMousoleumSchema.optional(),
     QuestMoussuPicchu: questMoussuPicchuSchema.optional(),
     QuestPollutionOutbreak: questPollutionOutbreakSchema.optional(),
@@ -87,6 +89,7 @@ export * from "./iceberg";
 export * from "./labyrinth";
 export * from "./livingGarden";
 export * from "./lostCity";
+export * from "./lunarNewYear";
 export * from "./mousoleum";
 export * from "./moussuPicchu";
 export * from "./quesoGeyser";

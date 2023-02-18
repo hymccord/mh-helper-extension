@@ -17,25 +17,6 @@ export function calcHalloweenHuntDetails(message, user, user_post, hunt) {
 }
 
 /**
- * Set a value for LNY bonus luck, if it can be determined. Otherwise flag LNY hunts.
- * @param {Object <string, any>} message The message to be sent.
- * @param {Object <string, any>} user The user state object, when the hunt was invoked (pre-hunt).
- * @param {Object <string, any>} user_post The user state object, after the hunt.
- * @param {Object <string, any>} hunt The journal entry corresponding to the active hunt.
- */
-export function calcLNYHuntDetails(message, user, user_post, hunt) {
-    const quest = getActiveLNYQuest(user.quests);
-    if (quest) {
-        return {
-            is_lny_hunt: true,
-            lny_luck: (quest.lantern_status.includes("noLantern") || !quest.is_lantern_active)
-                ? 0
-                : Math.min(50, Math.floor(parseInt(quest.lantern_height, 10) / 10)),
-        };
-    }
-}
-
-/**
  * Track whether a catch was designated "lucky" or not.
  * @param {Object <string, any>} message The message to be sent.
  * @param {Object <string, any>} user The user state object, when the hunt was invoked (pre-hunt).
