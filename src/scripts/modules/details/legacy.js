@@ -1,22 +1,4 @@
 /**
-     * Record the Cannon state and whether the hunt was taken in a stockpile location.
-     * @param {Object <string, any>} message The message to be sent.
-     * @param {Object <string, any>} user The user state object, when the hunt was invoked (pre-hunt).
-     * @param {Object <string, any>} user_post The user state object, after the hunt.
-     * @param {Object <string, any>} hunt The journal entry corresponding to the active hunt.
-     */
-export function calcHalloweenHuntDetails(message, user, user_post, hunt) {
-    const quest = getActiveHalloweenQuest(user.quests);
-    if (quest) {
-        return {
-            is_halloween_hunt: true,
-            is_firing_cannon: !!(quest.is_cannon_enabled || quest.is_long_range_cannon_enabled),
-            is_in_stockpile: !!quest.has_stockpile,
-        };
-    }
-}
-
-/**
  * Track whether a catch was designated "lucky" or not.
  * @param {Object <string, any>} message The message to be sent.
  * @param {Object <string, any>} user The user state object, when the hunt was invoked (pre-hunt).
