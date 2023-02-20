@@ -3,6 +3,7 @@ import {IceFortressDetailer} from './environments/iceFortress';
 import {HalloweenDetailer} from './global/halloween';
 import {LuckyCatchDetailer} from './global/luckyCatch';
 import {LunarNewYearDetailer} from './global/lunarNewYear';
+import {PillageDetailer} from './global/pillage';
 import {SpringEggHuntDetailer} from './global/springEggHunt';
 
 // Detailer for specific location
@@ -15,6 +16,7 @@ const globalDetailerModules: IDetailer[] = [
     new HalloweenDetailer(),
     new LuckyCatchDetailer(),
     new LunarNewYearDetailer(),
+    new PillageDetailer(),
     new SpringEggHuntDetailer(),
 ];
 
