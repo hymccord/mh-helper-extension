@@ -620,10 +620,19 @@ export function addFortRoxStage(message, user, user_post, hunt) {
  * @param {Object <string, any>} hunt The journal entry corresponding to the active hunt.
  */
 export function addBristleWoodsRiftStage(message, user, user_post, hunt) {
-    message.stage = user.quests.QuestRiftBristleWoods.chamber_name;
-    if (message.stage === "Rift Acolyte Tower") {
-        message.stage = "Entrance";
+    const quest = user.quests.QuestRiftBristleWoods;
+    let chamber = quest.chamber_name;
+    if (chamber === "Rift Acolyte Tower") {
+        chamber = "Entrance";
     }
+    var stage = [chamber]
+    if (quest.status_effects.ng === "active") {
+        stage.push("(Paladin's Bane)");
+    }
+    if (quest.status_effects.st === "active") {
+        stage.push("(Pursued)");
+    }
+    message.stage = stage.join(" ");
 }
 
 
