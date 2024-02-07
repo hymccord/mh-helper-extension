@@ -1,10 +1,14 @@
 import {z} from "zod";
 
-export interface IntakeMessage {
+export interface BaseIntakeMessage {
+    uuid: string;
     extension_version: number;
-    user_id: number;
+    hunter_id_hash: string;
+    entry_timestamp: number; // seconds
+}
+
+export interface IntakeMessage extends BaseIntakeMessage {
     entry_id: number;
-    entry_timestamp: number;
     location: ComponentEntry | null;
     shield: boolean;
     total_power: number;
@@ -18,7 +22,9 @@ export interface IntakeMessage {
     caught: number;
     attracted: number;
     mouse: string;
-    loot: Loot[];
+    loot?: Loot[];
+    // eslint-disable-next-line @typescript-eslint/consistent-indexed-object-style
+    hunt_details: {[key: PropertyKey]: string | number | boolean}
 }
 
 /**

@@ -1,4 +1,48 @@
-import {Quests, User} from "@scripts/types/hg";
+import {HgResponse, JournalMarkup, Quests, User} from "@scripts/types/hg";
+import {IntakeMessage} from "@scripts/types/mhct";
+// import {StringifyProperties} from "./mockServer";
+
+export class HgResponseBuilder {
+
+    activeTurn?: boolean;
+    user?: User;
+    page?: unknown;
+    journalMarkup?: JournalMarkup[];
+
+    withActiveTurn(active: boolean) {
+        this.activeTurn = active;
+        return this;
+    }
+
+    withUser(user: User) {
+        this.user = user;
+        return this;
+    }
+
+    withPage(page: unknown) {
+        this.page = page;
+        return this;
+    }
+
+    withJournalMarkup(journalMarkup: JournalMarkup[]) {
+        this.journalMarkup = journalMarkup;
+        return this;
+    }
+
+    public build(): HgResponse {
+        if (this.user == null) {
+            throw new Error('User must be set');
+        }
+
+        return {
+            success: 1,
+            active_turn: this.activeTurn,
+            user: this.user,
+            page: this.page,
+            journal_markup: this.journalMarkup,
+        };
+    }
+}
 
 type UserIdentification = Pick<User, 'user_id' | 'sn_user_id' | 'unique_hash' | 'has_shield'>;
 type UserTurn = Pick<User, | 'num_active_turns' | 'next_activeturn_seconds'>
@@ -116,5 +160,69 @@ export class UserBuilder {
             quests: this.quests,
             viewing_atts: {},
         };
+    }
+}
+
+export class IntakeMessageBuilder {
+
+    stage: unknown;
+
+    withStage(stage: unknown) {
+        this.stage = stage;
+        return this;
+    }
+
+    public build(response: HgResponse): IntakeMessage {
+        if (response.journal_markup == null) {
+            throw new Error('Journal Markup cannot be empty');
+        }
+
+        const renderData = response.journal_markup[0].render_data;
+
+
+        const message = {
+            uuid: '1',
+            extension_version: '0',
+            hunter_id_hash: '01020304',
+            entry_timestamp: renderData.entry_timestamp.toString(),
+            location: {
+                id: `${response.user.environment_id}`,
+                name: `${response.user.environment_name}`,
+            },
+            shield: `${response.user.has_shield}`,
+            total_power: `${response.user.trap_power}`,
+            total_luck: `${response.user.trap_luck}`,
+            attraction_bonus: `${response.user.trap_attraction_bonus * 100}`,
+            trap: {
+                id: `${response.user.weapon_item_id}`,
+                name: `${response.user.weapon_name.replace(/ trap$/i, '')}`,
+            },
+            base: {
+                id: `${response.user.base_item_id}`,
+                name: `${response.user.base_name.replace(/ base$/i, '')}`,
+            },
+            cheese: {
+                id: `${response.user.bait_item_id}`,
+                name: `${response.user.bait_name.replace(/ cheese$/i, '')}`,
+            },
+            charm: {
+                id: `${response.user.trinket_item_id}`,
+                name: `${response.user.trinket_name?.replace(/ charm$/i, '')}`,
+            },
+            mouse: `${renderData.text.replace(/ mouse$/i, '')}`,
+            // set these to static for now. May want to configure in future
+            entry_id: '1',
+            caught: '1',
+            attracted: '1',
+            hunt_details: {
+                hunt_count: '1',
+            },
+        } as unknown as IntakeMessage;
+
+        if (this.stage) {
+            message.stage = this.stage;
+        }
+
+        return message;
     }
 }

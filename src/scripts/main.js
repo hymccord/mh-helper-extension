@@ -335,7 +335,7 @@ import * as detailingFuncs from './modules/details/legacy.js';
             hunt_xhr.send = (...huntArgs) => {
                 $.ajax({
                     method: "post",
-                    url: "/managers/ajax/pages/page.php",
+                    url: "https://www.mousehuntgame.com/managers/ajax/pages/page.php",
                     data: {
                         sn: "Hitgrab",
                         page_class: "Camp",
@@ -1298,7 +1298,7 @@ import * as detailingFuncs from './modules/details/legacy.js';
         // Tell content script we are done loading
         window.postMessage({
             mhct_finish_load: 1,
-        });
+        }, window.origin);
 
         logger.info(`${versionInfo} loaded! Good luck!`);
     }
