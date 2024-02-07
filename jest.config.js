@@ -13,4 +13,5 @@ module.exports = {
         prefix: "<rootDir>/",
     }),
     testEnvironment: 'jsdom',
+    setupFiles: [ './tests/setup-env.ts' ],
 };
