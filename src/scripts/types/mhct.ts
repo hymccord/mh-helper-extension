@@ -27,6 +27,12 @@ export interface IntakeMessage extends BaseIntakeMessage {
     hunt_details: {[key: PropertyKey]: string | number | boolean}
 }
 
+export interface ConvertibleMessage extends BaseIntakeMessage {
+    convertible: HgItem;
+    items: HgItem[];
+    asset_package_hash: number;
+}
+
 /**
  * An object with an numbered id and string name.
  */
@@ -45,7 +51,7 @@ interface Loot {
 }
 
 /**
- * An object opened (convertible) or recieved (convertible contents)
+ * An object opened (convertible) or received (convertible contents)
  */
 export const hgItemSchema = z.object({
     /** HitGrab's ID for the id */
@@ -53,7 +59,7 @@ export const hgItemSchema = z.object({
     item_id: z.coerce.number().optional(),
     /** HitGrab's display name for the item */
     name: z.string(),
-    /** The number of items opened or recieved */
+    /** The number of items opened or received */
     quantity: z.coerce.number(),
 })
     .transform((val, ctx) => {

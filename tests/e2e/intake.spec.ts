@@ -3,7 +3,8 @@ import nock from 'nock';
 
 import MockServer from './mockServer';
 import {e2eTeardown, e2eSetup} from './e2eSetup';
-import {HgResponseBuilder, IntakeMessageBuilder, UserBuilder} from './builders';
+import {ConvertibleMessageBuilder, HgResponseBuilder, IntakeMessageBuilder, UserBuilder} from './builders';
+import {HgConvertibleResponse} from '@scripts/types/hg';
 
 // Dont run any legacy js for now. It isn't strongly typed yet (mostly quests for detailers).
 jest.mock('@scripts/modules/details/legacy');
@@ -85,5 +86,48 @@ describe('mhct intake', () => {
         expect(data).toEqual(expect.objectContaining(expectedMessage));
     });
 
+    it('should process an opened convertible', async () => {
+        const response = {
+            convertible_open: {
+                quantity: 7,
+                type: 'baz_convertible',
+                items: [
+                    {
+                        type: 'foo_stat_item',
+                        name: 'Foo',
+                        quantity: 32,
+                    },
+                ],
+            },
+            inventory: {
+                foo_stat_item: {
+                    item_id: 555,
+                },
+            },
+            items: {
+                baz_convertible: {
+                    item_id: 1234,
+                    name: 'Baz',
+                    quantity: 7,
+                },
+            },
+        };
+
+        server.HitGrabServer
+            .post('/managers/ajax/users/useconvertible.php')
+            .reply(200, () => response);
+
+        const postedDataPromise = server.spyOnPost('convertible_intake.php');
+
+        // "Open" convertible
+        $.post('https://www.mousehuntgame.com/managers/ajax/users/useconvertible.php');
+
+        const data = await postedDataPromise;
+
+        const expected = new ConvertibleMessageBuilder()
+            .build(response as unknown as HgConvertibleResponse);
+
+        expect(data).toEqual(expect.objectContaining(expected));
+    });
 });
 

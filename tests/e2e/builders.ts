@@ -1,5 +1,5 @@
-import {HgResponse, JournalMarkup, Quests, User} from "@scripts/types/hg";
-import {IntakeMessage} from "@scripts/types/mhct";
+import {HgConvertibleResponse, HgResponse, JournalMarkup, Quests, User} from "@scripts/types/hg";
+import {ConvertibleMessage, IntakeMessage} from "@scripts/types/mhct";
 // import {StringifyProperties} from "./mockServer";
 
 export class HgResponseBuilder {
@@ -222,6 +222,46 @@ export class IntakeMessageBuilder {
         if (this.stage) {
             message.stage = this.stage;
         }
+
+        return message;
+    }
+}
+
+export class ConvertibleMessageBuilder {
+
+    stage: unknown;
+
+    withStage(stage: unknown) {
+        this.stage = stage;
+        return this;
+    }
+
+    public build(response: HgConvertibleResponse): ConvertibleMessage {
+        const convertibleItem = response.items[response.convertible_open.type];
+
+        if (convertibleItem == null) {
+            throw new Error();
+        }
+
+        const message: ConvertibleMessage = {
+            convertible: {
+                id: convertibleItem.item_id.toString(),
+                name: convertibleItem.name,
+                quantity: convertibleItem.quantity.toString(),
+            },
+            items: response.convertible_open.items.map(v => {
+                return {
+                    id: response.inventory[v.type].item_id.toString(),
+                    name: v.name,
+                    quantity: v.quantity.toString(),
+                };
+            }),
+            uuid: '1',
+            extension_version: '0',
+            hunter_id_hash: '01020304',
+            entry_timestamp: '1212121',
+            asset_package_hash: '1212121000',
+        } as unknown as ConvertibleMessage;
 
         return message;
     }
