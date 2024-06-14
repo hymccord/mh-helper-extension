@@ -50,7 +50,6 @@ module.exports = {
         'no-var': ['warn'],
         'object-curly-spacing': ['error', 'never'],
         'object-curly-newline': ['error'],
-        'prefer-const': ['error'],
         'semi': ['error', 'always'],
         'no-unused-vars': 'off',
         '@typescript-eslint/no-unused-vars': [
