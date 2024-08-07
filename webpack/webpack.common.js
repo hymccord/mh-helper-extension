@@ -1,11 +1,16 @@
 const path = require('path');
 const CopyPlugin = require('copy-webpack-plugin');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
 const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 const RemoteDownloadFileWebpackPlugin = require('./RemoteDownloadFileWebpackPlugin.js');
 
 const srcScripts = path.resolve(__dirname, '../src/scripts/');
 const outpath = path.resolve(__dirname, '../dist/');
+
+const plugins = [
+    new HtmlWebpackPlugin()
+]
 
 module.exports = {
     entry: {

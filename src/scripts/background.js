@@ -1,3 +1,5 @@
+// @ts-check
+import browser from "webextension-polyfill";
 /** Persistent background script.
  * MAYBE: Migrate to non-persistent, event-based background script.
  * info: https://developer.chrome.com/extensions/background_migration
@@ -16,15 +18,27 @@ chrome.runtime.onInstalled.addListener(() => chrome.tabs.query(
 ));
 
 // Schedule an update of the badge text every second, using the latest settings.
-setInterval(() => check_settings(icon_timer_find_open_mh_tab), 1000);
 
+chrome.storage.sync.onChanged.addListener((changes) => {
+    window.console.log("settings changed", changes);
+    for (const [key, change] of Object.entries(changes)) {
+        if (change.newValue) {
+            settings[key] = change.newValue;
+        }
+    }
+});
 
 /**
- *
- * @param {Function} callback Some callable that needs the current extension settings
+ * @type {{ [x: string]: any; icon_timer?: any; horn_sound?: any; horn_volume?: any; custom_sound?: any; horn_alert?: any; horn_webalert?: any; horn_popalert?: any; }}
  */
-function check_settings(callback) {
-    chrome.storage.sync.get({
+let settings;
+(async () => {
+  settings = await getSettings();
+  setInterval(updateBadgeInterval, 1000);
+})();
+
+function getSettings() {
+    return chrome.storage.sync.get({
         // DEFAULTS
         success_messages: true,
         error_messages: true,
@@ -37,25 +51,34 @@ function check_settings(callback) {
         horn_popalert: false,
         tracking_enabled: true,
         dark_mode: false,
-    },
-    settings => callback(settings));
+    });
 }
 
 /**
- * Update the badge text icon timer with info from the latest settings and current MH page.
- * @param {Object <string, any>} settings Extension settings
+ * Update the badge text icon timer with current MH page.
  */
-function icon_timer_find_open_mh_tab(settings) {
-    chrome.tabs.query({'url': ['*://www.mousehuntgame.com/*', '*://apps.facebook.com/mousehunt/*']},
-        (found_tabs) => {
-            const [mhTab] = found_tabs;
-            if (mhTab && (!mhTab.status || mhTab.status === "complete")) {
-                icon_timer_updateBadge(mhTab.id, settings);
-            } else {
-                // The tab was either not found, or is still loading.
-                icon_timer_updateBadge(false, settings);
-            }
-        });
+async function updateBadgeInterval() {
+    let resultTabs = await new Promise((resolve) =>
+        chrome.tabs.query({url: ['*://www.mousehuntgame.com/*', '*://apps.facebook.com/mousehunt/*']}, resolve)
+    );
+
+    if (resultTabs?.length === 0) {
+        updateBadge(false);
+        return Promise.resolve();
+    }
+
+    resultTabs = resultTabs.filter(tab => tab.status === "complete");
+    // prefer pinned tabs first then left most
+    resultTabs.sort((a, b) => {
+        if (a.pinned ^ b.pinned) {
+            return (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0);
+        }
+
+        return a.index - b.index;
+    });
+
+    const [mhTab] = resultTabs;
+    await updateBadge(mhTab.id ?? false);
 }
 
 // Notifications
@@ -64,10 +87,9 @@ let notification_done = false;
 /**
  * Scheduled function that sets the badge color & text based on current settings.
  * Modifies the global `notification_done` as appropriate.
- * @param {number|boolean} tab_id The MH tab's ID, or `false` if no MH page is open & loaded.
- * @param {Object <string, any>} settings Extension settings
+ * @param {number|false} tab_id The MH tab's ID, or `false` if no MH page is open & loaded.
  */
-function icon_timer_updateBadge(tab_id, settings) {
+async function updateBadge(tab_id) {
     if (tab_id === false) {
         chrome.browserAction.setBadgeText({text: ''});
         return;
@@ -75,110 +97,126 @@ function icon_timer_updateBadge(tab_id, settings) {
 
     // Query the MH page and update the badge based on the response.
     const request = {mhct_link: "huntTimer"};
-    chrome.tabs.sendMessage(tab_id, request, response => {
+    let response = await new Promise((resolve) => chrome.tabs.sendMessage(tab_id, request, resolve));
 
-        async function show_web_alert() {
-            await new Promise(r => setTimeout(r, 1000));
-            chrome.tabs.update(tab_id, {'active': true});
-            chrome.tabs.sendMessage(tab_id, {mhct_link: "show_horn_alert"});
+    if (chrome.runtime.lastError || !response) {
+        const logInfo = {tab_id, request, response, time: new Date(),
+            message: "Error occurred while updating badge icon timer."};
+        if (chrome.runtime.lastError) {
+            logInfo.message += `\n${chrome.runtime.lastError.message}`;
+        }
+        console.log(logInfo);
+        chrome.browserAction.setBadgeText({text: ''});
+        notification_done = true;
+    } else if (response === "Ready") {
+        if (settings.icon_timer) {
+            chrome.browserAction.setBadgeBackgroundColor({color: '#9b7617'});
+            chrome.browserAction.setBadgeText({text: '🎺'});
+        }
+        // If we haven't yet sent a notification about the horn, do so if warranted.
+        if (!notification_done) {
+            if (settings.horn_sound && settings.horn_volume > 0) {
+                const myAudio = new Audio(settings.custom_sound || default_sound);
+                myAudio.volume = (settings.horn_volume / 100);
+                myAudio.play();
+            }
+
+            await Promise.allSettled([
+                showDesktopNotification(),
+                showIntrusiveAlert(tab_id),
+                showBackgroundAlert(tab_id),
+            ]);
         }
 
-        async function show_pop_alert() {
-            await new Promise(r => setTimeout(r, 1000));
-            if (confirm("MouseHunt Horn is Ready! Sound it now?")) {
-                chrome.tabs.sendMessage(tab_id, {mhct_link: "horn"});
-            }
+        notification_done = true;
+    } else if (["King's Reward", "Logged out"].includes(response)) {
+        if (settings.icon_timer) {
+            chrome.browserAction.setBadgeBackgroundColor({color: '#F00'});
+            chrome.browserAction.setBadgeText({text: 'RRRRRRR'});
         }
-
-        if (chrome.runtime.lastError || !response) {
-            const logInfo = {tab_id, request, response, time: new Date(),
-                message: "Error occurred while updating badge icon timer."};
-            if (chrome.runtime.lastError) {
-                logInfo.message += `\n${chrome.runtime.lastError.message}`;
-            }
-            console.log(logInfo);
-            chrome.browserAction.setBadgeText({text: ''});
-            notification_done = true;
-        } else if (response === "Ready") {
-            if (settings.icon_timer) {
-                chrome.browserAction.setBadgeBackgroundColor({color: '#9b7617'});
-                chrome.browserAction.setBadgeText({text: '🎺'});
-            }
-            // If we haven't yet sent a notification about the horn, do so if warranted.
-            if (!notification_done) {
-                if (settings.horn_sound && settings.horn_volume > 0) {
-                    const myAudio = new Audio(settings.custom_sound || default_sound);
-                    myAudio.volume = (settings.horn_volume / 100).toFixed(2);
-                    myAudio.play();
-                }
-
-                if (settings.horn_alert) {
-                    chrome.notifications.create(
-                        "MHCT Horn",
-                        {
-                            type: "basic",
-                            iconUrl: "images/icon128.png",
-                            title: "MHCT Tools",
-                            message: "MouseHunt Horn is ready!!! Good luck!",
-                        }
-                    );
-                }
-
-                if (settings.horn_webalert) {
-                    show_web_alert();
-                }
-
-                if (settings.horn_popalert) {
-                    show_pop_alert();
-                }
-            }
-            notification_done = true;
-        } else if (["King's Reward", "Logged out"].includes(response)) {
-            if (settings.icon_timer) {
-                chrome.browserAction.setBadgeBackgroundColor({color: '#F00'});
-                chrome.browserAction.setBadgeText({text: 'RRRRRRR'});
-            }
-            notification_done = true;
-        } else {
-            // The user is logged in, has no KR, and the horn isn't ready yet. Set
-            // the badge text to the remaining time before the next horn.
-            notification_done = false;
-            if (settings.icon_timer) {
-                chrome.browserAction.setBadgeBackgroundColor({color: '#222'});
-                response = response.replace(':', '');
-                const response_int = parseInt(response, 10);
-                if (response.includes('min')) {
-                    response = response_int + 'm';
-                } else {
-                    if (response_int > 59) {
-                        let minutes = Math.floor(response_int / 100);
-                        const seconds = response_int % 100;
-                        if (seconds > 30) {
-                            ++minutes;
-                        }
-                        response = minutes + 'm';
-                    } else {
-                        response = response_int + 's';
+        notification_done = true;
+    } else {
+        // The user is logged in, has no KR, and the horn isn't ready yet. Set
+        // the badge text to the remaining time before the next horn.
+        notification_done = false;
+        if (settings.icon_timer) {
+            chrome.browserAction.setBadgeBackgroundColor({color: '#222'});
+            response = response.replace(':', '');
+            const response_int = parseInt(response, 10);
+            if (response.includes('min')) {
+                response = response_int + 'm';
+            } else {
+                if (response_int > 59) {
+                    let minutes = Math.floor(response_int / 100);
+                    const seconds = response_int % 100;
+                    if (seconds > 30) {
+                        ++minutes;
                     }
+                    response = minutes + 'm';
+                } else {
+                    response = response_int + 's';
                 }
-            } else { // reset in case user turns icon_timer off
-                response = "";
             }
-            chrome.browserAction.setBadgeText({text: response});
+        } else { // reset in case user turns icon_timer off
+            response = "";
         }
-    });
+        await chrome.browserAction.setBadgeText({text: response});
+    }
+}
+
+async function showDesktopNotification() {
+
+    if (!settings.horn_alert) {
+        return Promise.resolve();
+    }
+
+    chrome.notifications.create(
+        "MHCT Horn",
+        {
+            type: "basic",
+            iconUrl: "images/icon128.png",
+            title: "MHCT Tools",
+            message: "MouseHunt Horn is ready!!! Good luck!",
+        }
+    );
+
+    return Promise.resolve();
+}
+
+/**
+ * @param {number} tabId
+ */
+async function showIntrusiveAlert(tabId) {
+
+    if (!settings.horn_webalert) {
+        return Promise.resolve();
+    }
+
+    await new Promise(r => setTimeout(r, 1000));
+    await chrome.tabs.update(tabId, {'active': true});
+    await chrome.tabs.sendMessage(tabId, {mhct_link: "show_horn_alert"});
+}
+
+/**
+ * @param {number} tabId
+ */
+async function showBackgroundAlert(tabId) {
+
+    if (!settings.horn_popalert) {
+        return Promise.resolve();
+    }
+
+    await new Promise(r => setTimeout(r, 1000));
+    if (confirm("MouseHunt Horn is Ready! Sound it now?")) {
+        await chrome.tabs.sendMessage(tabId, {mhct_link: "horn"});
+    }
 }
 
 // Handle messages sent by the extension to the runtime.
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     // Check the message for something to log in the background's console.
     if (msg.log) {
-        let fn = console.log;
-        if (msg.log.is_error) {
-            fn = console.error;
-        } else if (msg.log.is_warning) {
-            fn = console.warn;
-        }
+        const fn = msg.log.is_error ? console.error : msg.log_is_warning ? console.warn : console.log;
         fn({message: msg.log, sender});
     } else if (msg.settings?.debug_logging) {
         console.log({msg, msg_sender: sender});
