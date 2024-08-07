@@ -2,6 +2,7 @@
 import {IntakeRejectionEngine} from "./hunt-filter/engine";
 import {ConsoleLogger, LogLevel} from './util/logger';
 import {getUnixTimestamp} from "./util/time";
+import {hgResponseSchema} from "./types/hg";
 import {HornHud} from './util/hornHud';
 import {parseHgInt} from "./util/number";
 import * as successHandlers from './modules/ajax-handlers';
@@ -327,6 +328,18 @@ import * as detailingFuncs from './modules/details/legacy';
                 createHunterIdHash();
             }
 
+            if (url.startsWith("https://www.mousehuntgame.com")) {
+                try {
+                    const json = JSON.parse(xhr.responseText);
+                    const parseResult = hgResponseSchema.safeParse(json);
+                    if (!parseResult.success) {
+                        logger.debug("Unexpected response type received", parseResult.error?.message);
+                    }
+                } catch {
+                    // help
+                }
+            }
+
             for (const handler of ajaxSuccessHandlers) {
                 if (handler.match(url)) {
                     handler.execute(xhr.responseJSON);
@@ -428,11 +441,22 @@ import * as detailingFuncs from './modules/details/legacy';
     }
 
     /**
-     * @param {import("./types/hg").HgResponse} pre_response The object obtained prior to invoking `activeturn.php`.
-     * @param {import("./types/hg").HgResponse} post_response Parsed JSON representation of the response from calling activeturn.php
+     * @param {unknown} pre_response The object obtained prior to invoking `activeturn.php`.
+     * @param {unknown} post_response Parsed JSON representation of the response from calling activeturn.php
      */
     function recordHuntWithPrehuntUser(pre_response, post_response) {
         logger.debug("In recordHuntWithPrehuntUser pre and post:", pre_response, post_response);
+
+        const safeParseResultPre = hgResponseSchema.safeParse(pre_response);
+        const safeParseResultPost = hgResponseSchema.safeParse(post_response);
+
+        if (!safeParseResultPre.success || !safeParseResultPost.success) {
+            logger.warn("Unexpected response type received", safeParseResultPre.error?.message, safeParseResultPost.error?.message);
+            return;
+        }
+
+        const parsedPreResponse = safeParseResultPre.data;
+        const parsedPostResponse = safeParseResultPost.data;
 
         // General data flow
         // - Validate API response object
@@ -443,13 +467,13 @@ import * as detailingFuncs from './modules/details/legacy';
 
         // This will throw out any hunts where the page.php or activeturn.php calls fail to return
         // the expected objects (success, active turn, needing a page object on pre)
-        let validated = rejectionEngine.validateResponse(pre_response, post_response);
+        let validated = rejectionEngine.validateResponse(parsedPreResponse, parsedPostResponse);
         if (!validated) {
             return;
         }
 
-        const user_pre = pre_response.user;
-        const user_post = post_response.user;
+        const user_pre = parsedPreResponse.user;
+        const user_post = parsedPostResponse.user;
         validated = rejectionEngine.validateUser(user_pre, user_post);
         if (!validated) {
             return;
@@ -513,7 +537,7 @@ import * as detailingFuncs from './modules/details/legacy';
         }
 
         // Find maximum entry id from pre_response
-        let max_old_entry_id = pre_response.page.journal.entries_string.match(/data-entry-id='(\d+)'/g);
+        let max_old_entry_id = parsedPreResponse.page.journal.entries_string.match(/data-entry-id='(\d+)'/g);
         if (!max_old_entry_id.length) {
             max_old_entry_id = 0;
         } else {
@@ -523,7 +547,7 @@ import * as detailingFuncs from './modules/details/legacy';
         }
         logger.debug(`Pre (old) maximum entry id: ${max_old_entry_id}`);
 
-        const hunt = parseJournalEntries(post_response, max_old_entry_id);
+        const hunt = parseJournalEntries(parsedPostResponse, max_old_entry_id);
         if (!hunt || Object.keys(hunt).length === 0) {
             logger.info("Missing Info (trap check or friend hunt)(2)");
             return;
@@ -549,7 +573,7 @@ import * as detailingFuncs from './modules/details/legacy';
 
             addStage(message, user, user_post, hunt);
             addHuntDetails(message, user, user_post, hunt);
-            addLoot(message, hunt, post_response.inventory);
+            addLoot(message, hunt, parsedPostResponse.inventory);
 
             return message;
         }
