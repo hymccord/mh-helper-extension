@@ -48,7 +48,6 @@ module.exports = {
         'no-constant-binary-expression': ['error'],
         'no-unneeded-ternary': ['error'],
         'no-var': ['warn'],
-        'object-curly-spacing': ['error', 'never'],
         'object-curly-newline': ['error'],
         'prefer-const': ['error'],
         'semi': ['error', 'always'],

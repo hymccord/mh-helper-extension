@@ -1,3 +1,5 @@
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-nocheck
 // JS script available only within the embedded options.html page
 const mhhhOptions = [
     {name: 'message_display',            p: 'value',   default: 'hud'},

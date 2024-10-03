@@ -6,7 +6,7 @@ export enum LogLevel {
     Error,
 }
 
-export const DEFAULT_LOG_LEVEL: LogLevel = LogLevel.Info;
+export const DEFAULT_LOG_LEVEL: LogLevel = LogLevel.Debug;
 
 export abstract class LoggerService {
     abstract getLevel(): LogLevel;
@@ -55,7 +55,7 @@ export class ConsoleLogger implements LoggerService {
             return;
         }
 
-        const prefixedMessage =  `MHCT: ${message}`;
+        const prefixedMessage =  `[${new Date().toISOString()}] MHCT: ${message}`;
         switch (level) {
             case LogLevel.Debug:
                 console.debug(prefixedMessage, ...args);
