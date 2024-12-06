@@ -9,7 +9,7 @@
 .popup-link-out:visited {
     display: block;
     text-decoration: none;
-    color: black;
+    color: var(--bs-body-color);
     white-space: nowrap;
 }
 td {
@@ -40,8 +40,6 @@ td:hover {
     color: white;
     font-weight: bolder;
     font-size: large;
-    padding-top: 1em;
-    padding-bottom: 1em;
 }
 
 .horn {
