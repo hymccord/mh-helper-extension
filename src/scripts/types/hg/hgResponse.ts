@@ -1,11 +1,12 @@
 import {z} from "zod";
-import {userSchema} from "./user";
-import {journalMarkupSchema} from "./journalMarkup";
 import {inventoryItemSchema} from "./inventoryItem";
+import {journalMarkupSchema} from "./journalMarkup";
+import {pageSchema} from "./page";
+import {userSchema} from "./user";
 
 export const hgResponseSchema = z.object({
     user: userSchema,
-    page: z.unknown().optional(),
+    page: pageSchema.optional(),
     success: z.union([z.literal(0), z.literal(1)]),
     active_turn: z.boolean().optional(),
     journal_markup: z.array(journalMarkupSchema).optional(),

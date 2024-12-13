@@ -1,4 +1,4 @@
-import {HgResponse, JournalMarkup, Quests, User} from "@scripts/types/hg";
+import {HgResponse, JournalMarkup, Page, Quests, User} from "@scripts/types/hg";
 import {IntakeMessage} from "@scripts/types/mhct";
 
 /*
@@ -9,7 +9,7 @@ export class HgResponseBuilder {
 
     activeTurn?: boolean;
     user?: User;
-    page?: unknown;
+    page?: Page;
     journalMarkup?: JournalMarkup[];
 
     withActiveTurn(active: boolean) {
@@ -22,7 +22,7 @@ export class HgResponseBuilder {
         return this;
     }
 
-    withPage(page: unknown) {
+    withPage(page: Page) {
         this.page = page;
         return this;
     }
