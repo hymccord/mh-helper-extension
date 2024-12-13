@@ -629,7 +629,7 @@ import * as detailingFuncs from './modules/details/legacy';
 
         logger.debug("Recording hunt", {message_var:message_pre, user_pre, user_post, hunt});
         // Upload the hunt record.
-        sendMessageToServer(main_intake_url, message_pre);
+        submitMainIntakeMessage(message_pre);
     }
 
     // Add bonus journal entry stuff to the hunt_details
@@ -731,6 +731,10 @@ import * as detailingFuncs from './modules/details/legacy';
         sendMessageToServer(convertible_intake_url, record);
     }
 
+    function submitMainIntakeMessage(message) {
+        sendMessageToServer(main_intake_url, message);
+    }
+
     function sendMessageToServer(url, final_message) {
         if (final_message.entry_timestamp == null) {
             final_message.entry_timestamp = getUnixTimestamp();
@@ -802,7 +806,7 @@ import * as detailingFuncs from './modules/details/legacy';
                 // may appear and have been back-calculated as occurring before reset).
                 if (rh_message.entry_timestamp > Math.round(new Date().setUTCHours(0, 0, 0, 0) / 1000)) {
                     if (userSettings['tracking-events']) {
-                        sendMessageToServer(main_intake_url, rh_message);
+                        submitMainIntakeMessage(rh_message);
                         logger.debug(`Found the Relic Hunter in ${rh_message.rh_environment}`);
                     }
                 }
