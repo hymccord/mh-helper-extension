@@ -1,17 +1,17 @@
 /*jslint browser:true */
-import {IntakeRejectionEngine} from "./hunt-filter/engine";
-import {ConsoleLogger, LogLevel} from './util/logger';
-import {EnvironmentService} from "./services/environment.service";
-import {MouseRipApiService} from "./services/mouserip-api.service";
-import {SubmissionService} from "./services/submission.service";
-import {ApiService} from "./services/api.service";
-import {hgResponseSchema} from "./types/hg";
-import {HornHud} from './util/hornHud';
-import {parseHgInt} from "./util/number";
-import * as successHandlers from './modules/ajax-handlers';
-import * as detailers from './modules/details';
-import * as stagers from './modules/stages';
-import * as detailingFuncs from './modules/details/legacy';
+import {IntakeRejectionEngine} from "./hunt-filter/engine.ts";
+import {ConsoleLogger, LogLevel} from './util/logger.ts';
+import {EnvironmentService} from "./services/environment.service.ts";
+import {MouseRipApiService} from "./services/mouserip-api.service.ts";
+import {SubmissionService} from "./services/submission.service.ts";
+import {ApiService} from "./services/api.service.ts";
+import {hgResponseSchema} from "./types/hg/index.ts";
+import {HornHud} from './util/hornHud.ts';
+import {parseHgInt} from "./util/number.ts";
+import * as successHandlers from './modules/ajax-handlers/index.ts';
+import * as detailers from './modules/details/index.ts';
+import * as stagers from './modules/stages/index.ts';
+import * as detailingFuncs from './modules/details/legacy.js';
 
 (function () {
     'use strict';

@@ -1,4 +1,4 @@
-import {HornHud} from './util/hornHud';
+import {HornHud} from './util/hornHud.ts';
 
 (async function () {
 if (document.body == null) {
