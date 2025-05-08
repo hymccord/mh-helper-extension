@@ -2,6 +2,7 @@ import {SEHAjaxHandler} from "@scripts/modules/ajax-handlers";
 import {SubmissionService} from "@scripts/services/submission.service";
 import {HgResponse} from "@scripts/types/hg";
 import {LoggerService} from '@scripts/util/logger';
+import {HgResponseBuilder} from "@tests/utility/builders";
 import {mock} from "jest-mock-extended";
 
 const logger = mock<LoggerService>();
@@ -11,6 +12,7 @@ const handler = new SEHAjaxHandler(logger, submissionService);
 const sbfactory_url = "mousehuntgame.com/managers/ajax/events/spring_hunt.php";
 
 describe("SEHAjaxHandler", () => {
+    const responseBuilder = new HgResponseBuilder();
     beforeEach(() => {
         jest.clearAllMocks();
     });
@@ -27,25 +29,31 @@ describe("SEHAjaxHandler", () => {
 
     describe("execute", () => {
         it('logs if SEH response is not egg opening', async () => {
-            await handler.execute({} as unknown as HgResponse);
+            const response = responseBuilder
+                .build();
+            await handler.execute(response);
 
-            expect(logger.debug).toBeCalledWith('Skipping SEH egg submission as this isn\'t an egg convertible');
+            expect(logger.debug).toHaveBeenCalledWith('Skipping SEH egg submission as this isn\'t an egg convertible');
             expect(submissionService.submitEventConvertible).toHaveBeenCalledTimes(0);
         });
 
         it('warns if response is unexpected', async () => {
             // vending_machine_reponse.type missing here,
             // but add some other data to verify that it will print out entire response
-            const response = {user_id: 4, egg_contents: {}} as unknown as HgResponse;
+            const response = responseBuilder
+                .withUnknown({egg_contents: {}})
+                .build();
             await handler.execute(response);
 
-            expect(logger.warn).toBeCalledWith('Unable to parse SEH response', {responseJSON: response});
+            expect(logger.warn).toHaveBeenCalledWith('Couldn\'t validate JSON response', expect.anything());
             expect(submissionService.submitEventConvertible).toHaveBeenCalledTimes(0);
         });
 
         it('submits expected response one', async () => {
-
-            await handler.execute(testResponses.responseOne);
+            const response = responseBuilder
+                .withUnknown(testResponses.responseOne)
+                .build();
+            await handler.execute(response);
 
             const expectedConvertible = {
                 id: 3407,
@@ -71,15 +79,17 @@ describe("SEHAjaxHandler", () => {
                 },
             ];
 
-            expect(submissionService.submitEventConvertible).toBeCalledWith(
+            expect(submissionService.submitEventConvertible).toHaveBeenCalledWith(
                 expectedConvertible,
                 expectedItems
             );
         });
 
         it('submits expected response two', async () => {
-
-            await handler.execute(testResponses.responseTwo);
+            const response = responseBuilder
+                .withUnknown(testResponses.responseTwo)
+                .build();
+            await handler.execute(response);
 
             const expectedConvertible = {
                 id: 3214,
@@ -105,15 +115,17 @@ describe("SEHAjaxHandler", () => {
                 },
             ];
 
-            expect(submissionService.submitEventConvertible).toBeCalledWith(
+            expect(submissionService.submitEventConvertible).toHaveBeenCalledWith(
                 expectedConvertible,
                 expectedItems
             );
         });
 
         it('submits expected response three', async () => {
-
-            await handler.execute(testResponses.responseThree);
+            const response = responseBuilder
+                .withUnknown(testResponses.responseThree)
+                .build();
+            await handler.execute(response);
 
             const expectedConvertible = {
                 id: 3555,
@@ -129,7 +141,7 @@ describe("SEHAjaxHandler", () => {
                 },
             ];
 
-            expect(submissionService.submitEventConvertible).toBeCalledWith(
+            expect(submissionService.submitEventConvertible).toHaveBeenCalledWith(
                 expectedConvertible,
                 expectedItems
             );
@@ -168,16 +180,19 @@ const testResponses = {
                 "item_id": 3407,
                 "name": "The Richest Egg",
                 "type": "richest_egg_convertible",
+                "quantity": 1,
             },
             "extra_rich_sky_cheese": {
                 "item_id": 3274,
                 "name": "Extra Rich Cloud Cheesecake",
                 "type": "extra_rich_sky_cheese",
+                "quantity": 1,
             },
             "sky_scrambler_stat_item": {
                 "item_id": 3077,
                 "name": "Cyclone Stone",
                 "type": "sky_scrambler_stat_item",
+                "quantity": 1,
             },
         },
     } as unknown as HgResponse,
@@ -211,22 +226,26 @@ const testResponses = {
                 "item_id": 3214,
                 "name": "Loot Cache Egg",
                 "type": "loot_cache_egg_convertible",
+                "quantity": 1,
             },
             "floating_islands_cloud_gem_stat_item": {
                 "item_id": 3073,
                 "name": "Sky Glass",
                 "type": "floating_islands_cloud_gem_stat_item",
+                "quantity": 1,
             },
             "cloud_curd_crafting_item": {
                 "item_id": 3047,
                 "name": "Cloud Curd",
                 "type": "cloud_curd_crafting_item",
                 "classification": "crafting_item",
+                "quantity": 1,
             },
             "floating_islands_sky_ore_stat_item": {
                 "item_id": 3074,
                 "name": "Sky Ore",
                 "type": "floating_islands_sky_ore_stat_item",
+                "quantity": 1,
             },
         },
     } as unknown as HgResponse,
@@ -249,11 +268,13 @@ const testResponses = {
                 "item_id": 3555,
                 "name": "Architeuthulhu Egg",
                 "type": "architeuthulhu_egg_convertible",
+                "quantity": 1,
             },
             "inspiration_ink_stat_item": {
                 "item_id": 3450,
                 "name": "Inspiration Ink",
                 "type": "inspiration_ink_stat_item",
+                "quantity": 1,
             },
         },
     } as unknown as HgResponse,

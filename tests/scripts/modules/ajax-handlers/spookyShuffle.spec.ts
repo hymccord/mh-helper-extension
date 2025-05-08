@@ -1,18 +1,16 @@
 import {SpookyShuffleAjaxHandler} from "@scripts/modules/ajax-handlers";
 import {SpookyShuffleResponse, SpookyShuffleStatus} from "@scripts/modules/ajax-handlers/spookyShuffle.types";
+import {MouseRipApiService} from "@scripts/services/mouserip-api.service";
 import {SubmissionService} from "@scripts/services/submission.service";
 import {LoggerService} from '@scripts/util/logger';
 import {CustomConvertibleIds} from "@scripts/util/constants";
-import {getItemsByClass} from "@scripts/util/hgFunctions";
 import {HgResponseBuilder} from "@tests/utility/builders";
 import {mock} from "jest-mock-extended";
 
-jest.mock('@scripts/util/hgFunctions');
-
 const logger = mock<LoggerService>();
 const submissionService = mock<SubmissionService>();
-const handler = new SpookyShuffleAjaxHandler(logger, submissionService);
-const mockedGetItemsByClass = jest.mocked(getItemsByClass);
+const mouseRipApiService = mock<MouseRipApiService>();
+const handler = new SpookyShuffleAjaxHandler(logger, submissionService, mouseRipApiService);
 
 const spookyShuffle_url = "mousehuntgame.com/managers/ajax/events/spooky_shuffle.php";
 
@@ -22,7 +20,19 @@ describe("SpookyShuffleAjaxHandler", () => {
 
     beforeEach(() => {
         jest.clearAllMocks();
-        jest.resetModules();
+
+        mouseRipApiService.getAllItems.mockResolvedValue([
+            {
+                name: 'Test Item',
+                type: 'test_item',
+                id: 1234,
+            },
+            {
+                name: 'Gold',
+                type: 'gold_stat_item',
+                id: 431,
+            }
+        ]);
     });
 
     describe("match", () => {
@@ -43,7 +53,7 @@ describe("SpookyShuffleAjaxHandler", () => {
 
             await handler.execute(response);
 
-            expect(logger.warn).toHaveBeenCalledWith('Unexpected spooky shuffle response object.', expect.anything());
+            expect(logger.warn).toHaveBeenCalledWith('Couldn\'t validate JSON response', expect.anything());
             expect(submissionService.submitEventConvertible).toHaveBeenCalledTimes(0);
         });
 
@@ -56,10 +66,10 @@ describe("SpookyShuffleAjaxHandler", () => {
                 title_range: 'novice_journeyman',
                 cards: [],
             };
-            const response: SpookyShuffleResponse = {
-                ...responseBuilder.build(),
-                memory_game: result,
-            };
+
+            const response = responseBuilder
+                .withUnknown({memory_game: result})
+                .build();
             await handler.execute(response);
 
             expect(logger.debug).toHaveBeenCalledWith('Spooky Shuffle board is not complete yet.');
@@ -87,13 +97,6 @@ describe("SpookyShuffleAjaxHandler", () => {
         });
 
         it('submits regular novice board', async () => {
-            mockedGetItemsByClass.mockReturnValue(Promise.resolve([
-                {
-                    name: 'Test Item',
-                    item_id: 1234,
-                },
-            ]));
-
             const result: SpookyShuffleStatus = {
                 is_complete: true,
                 is_upgraded: null,
@@ -144,13 +147,6 @@ describe("SpookyShuffleAjaxHandler", () => {
 
 
         it('submits upgraded duke board', async () => {
-            mockedGetItemsByClass.mockReturnValue(Promise.resolve([
-                {
-                    name: 'Test Item',
-                    item_id: 1234,
-                },
-            ]));
-
             const result: SpookyShuffleStatus = {
                 is_complete: true,
                 is_upgraded: true,
@@ -171,7 +167,7 @@ describe("SpookyShuffleAjaxHandler", () => {
                         quantity: 567,
                     },
                     {
-                        id: 1,
+                        id: 2,
                         name: 'Gold',
                         is_matched: true,
                         is_revealed: true,
@@ -212,13 +208,6 @@ describe("SpookyShuffleAjaxHandler", () => {
         });
 
         it('logs error when card name is not returned in getItemsByClass', async () => {
-            mockedGetItemsByClass.mockReturnValue(Promise.resolve([
-                {
-                    name: 'Fake Item',
-                    item_id: 9876,
-                },
-            ]));
-
             const result: SpookyShuffleStatus = {
                 is_complete: true,
                 is_upgraded: true,
@@ -233,7 +222,7 @@ describe("SpookyShuffleAjaxHandler", () => {
                 cards: [
                     {
                         id: 1,
-                        name: 'Test Item',
+                        name: 'Unfound Item',
                         is_matched: true,
                         is_revealed: true,
                         quantity: 567,
@@ -247,7 +236,7 @@ describe("SpookyShuffleAjaxHandler", () => {
 
             await handler.execute(response);
 
-            expect(logger.warn).toHaveBeenCalledWith(`Item 'Test Item' wasn't found in item map. Check its classification type`);
+            expect(logger.warn).toHaveBeenCalledWith(`Item 'Unfound Item' wasn't found in item map. Check its classification type`);
             expect(submissionService.submitEventConvertible).not.toHaveBeenCalled();
         });
 

@@ -1,19 +1,21 @@
 import {SubmissionService} from "@scripts/services/submission.service";
-import type {HgResponse} from "@scripts/types/hg";
+import {hgResponseSchema} from "@scripts/types/hg";
 import type {HgItem} from "@scripts/types/mhct";
 import type {LoggerService} from "@scripts/util/logger";
-import {AjaxSuccessHandler} from "./ajaxSuccessHandler";
+import {ValidatedAjaxSuccessHandler} from "./ajaxSuccessHandler";
+import {z} from "zod";
 
-export class SEHAjaxHandler extends AjaxSuccessHandler {
+export class SEHAjaxHandler extends ValidatedAjaxSuccessHandler {
+    readonly schema = eggContentsResponseSchema;
     /**
      * Create a new instance of Spring Egg Hunt ajax handler
      * @param logger logger to log events
      * @param submitConvertibleCallback delegate to submit convertibles to mhct
      */
     constructor(
-        private readonly logger: LoggerService,
+        logger: LoggerService,
         private readonly submissionService: SubmissionService) {
-        super();
+        super(logger);
     }
 
     /**
@@ -25,8 +27,8 @@ export class SEHAjaxHandler extends AjaxSuccessHandler {
         return url.includes("mousehuntgame.com/managers/ajax/events/spring_hunt.php");
     }
 
-    async execute(responseJSON: HgResponse): Promise<void> {
-        await this.recordEgg(responseJSON as HgResponseWithEggContents);
+    async validatedExecute(responseJSON: z.infer<typeof this.schema>): Promise<void> {
+        await this.recordEgg(responseJSON);
     }
 
     /**
@@ -34,15 +36,15 @@ export class SEHAjaxHandler extends AjaxSuccessHandler {
      * @param {import("@scripts/types/hg").HgResponse} responseJSON HitGrab ajax response.
      */
     async recordEgg(responseJSON: HgResponseWithEggContents) {
-        const purchase = responseJSON.egg_contents;
+        const egg_contents = responseJSON.egg_contents;
         const inventory = responseJSON.inventory;
 
-        if (!purchase) {
+        if (egg_contents === undefined) {
             this.logger.debug('Skipping SEH egg submission as this isn\'t an egg convertible');
             return;
         }
 
-        if (purchase.type == null) {
+        if (egg_contents.type == null) {
             this.logger.debug('Skipped SEH egg submission due to unhandled XHR structure');
             this.logger.warn('Unable to parse SEH response', {responseJSON});
             return;
@@ -55,9 +57,9 @@ export class SEHAjaxHandler extends AjaxSuccessHandler {
         }
 
         const convertible: HgItem = {
-            id: inventory[purchase.type].item_id,
-            name: inventory[purchase.type].name,
-            quantity: purchase.quantity_opened,
+            id: inventory[egg_contents.type].item_id,
+            name: inventory[egg_contents.type].name,
+            quantity: egg_contents.quantity_opened,
         };
 
         const inventoryWithExtraMap: Record<string, {name: string, item_id: number}> = {
@@ -69,7 +71,7 @@ export class SEHAjaxHandler extends AjaxSuccessHandler {
 
         const items: HgItem[] = [];
         try {
-            purchase.items.forEach(item => {
+            egg_contents.items.forEach(item => {
                 const inventoryItem = Object.values(inventoryWithExtraMap).find(i => i.name == item.name);
                 if (inventoryItem == null) {
                     this.logger.debug('Egg content item missing from inventory', {inventoryWithExtraMap, item});
@@ -93,19 +95,18 @@ export class SEHAjaxHandler extends AjaxSuccessHandler {
     }
 }
 
-interface HgResponseWithEggContents extends HgResponse {
-    egg_contents?: EggContents
-}
+const eggContentsSchema = z.object({
+    type: z.string(),
+    quantity_opened: z.coerce.number(),
+    items: z.array(z.object({
+        type: z.string(),
+        name: z.string(),
+        quantity: z.coerce.number(),
+    })),
+});
 
-interface EggContents {
-    type: string;
-    quantity_opened: number;
-    remaining_quantity: number;
-    items: EggContent[];
-}
+const eggContentsResponseSchema = hgResponseSchema.extend({
+    egg_contents: eggContentsSchema.optional(),
+});
 
-interface EggContent {
-    type: string;
-    name: string;
-    quantity: number;
-}
+type HgResponseWithEggContents = z.infer<typeof eggContentsResponseSchema>;

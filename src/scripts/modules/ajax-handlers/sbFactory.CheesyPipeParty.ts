@@ -1,21 +1,22 @@
-import {HgResponse} from "@scripts/types/hg";
-import {HgItem} from "@scripts/types/mhct";
-import {LoggerService} from "@scripts/util/logger";
-import {AjaxSuccessHandler} from "./ajaxSuccessHandler";
-import {CheesyPipePartyGame, CheesyPipePartyResponse, cheesyPipePartyResponseSchema, Region} from "./sbFactory.types";
-import {CustomConvertibleIds} from "@scripts/util/constants";
 import {SubmissionService} from "@scripts/services/submission.service";
+import {HgItem} from "@scripts/types/mhct";
+import {CustomConvertibleIds} from "@scripts/util/constants";
+import {LoggerService} from "@scripts/util/logger";
+import {ValidatedAjaxSuccessHandler} from "./ajaxSuccessHandler";
+import {CheesyPipePartyGame, CheesyPipePartyResponse, cheesyPipePartyResponseSchema, Region} from "./sbFactory.types";
+import {z} from "zod";
 
-export class CheesyPipePartyAjaxHandler extends AjaxSuccessHandler {
+export class CheesyPipePartyAjaxHandler extends ValidatedAjaxSuccessHandler {
+    readonly schema = cheesyPipePartyResponseSchema;
     /**
      * Create a new instance of SuperBrieFactoryHandler
      * @param logger logger to log events
      * @param submitConvertibleCallback delegate to submit convertibles to mhct
      */
     constructor(
-        private readonly logger: LoggerService,
+        logger: LoggerService,
         private readonly submissionService: SubmissionService) {
-        super();
+        super(logger);
     }
 
     /**
@@ -27,11 +28,7 @@ export class CheesyPipePartyAjaxHandler extends AjaxSuccessHandler {
         return url.includes("mousehuntgame.com/managers/ajax/events/cheesy_pipe_party.php");
     }
 
-    async execute(responseJSON: HgResponse): Promise<void> {
-        if (!this.isCheesyPipeParty(responseJSON)) {
-            return;
-        }
-
+    async validatedExecute(responseJSON: z.infer<typeof this.schema>): Promise<void> {
         if (!this.isGameComplete(responseJSON)) {
             this.logger.debug('Cheesy Pipe Party game is not complete.');
             return;
@@ -107,22 +104,6 @@ export class CheesyPipePartyAjaxHandler extends AjaxSuccessHandler {
         this.logger.debug('CheesyPipePartyAjaxHandler submitting game board', {convertible, items});
 
         await this.submissionService.submitEventConvertible(convertible, items);
-    }
-
-    /**
-     * Validates that the given object is a JSON response from interacting with the Cheesy Pipe Party game
-     * @param responseJSON The JSON response object
-     * @returns Boolean indicating if the object is a Cheesy Pipe Party response
-     */
-    private isCheesyPipeParty(responseJSON: unknown): responseJSON is CheesyPipePartyResponse {
-        const response = cheesyPipePartyResponseSchema.safeParse(responseJSON);
-
-        if (!response.success) {
-            const errorMessage = response.error.message;
-            this.logger.warn("Unexpected Cheesy Pipe Party response object.", errorMessage);
-        }
-
-        return response.success;
     }
 
     /**

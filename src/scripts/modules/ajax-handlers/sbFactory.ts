@@ -1,21 +1,22 @@
 import {SubmissionService} from "@scripts/services/submission.service";
-import type {HgResponse} from "@scripts/types/hg";
 import type {HgItem} from "@scripts/types/mhct";
 import type {LoggerService} from "@scripts/util/logger";
 import {CustomConvertibleIds as Ids} from "@scripts/util/constants";
-import {AjaxSuccessHandler} from "./ajaxSuccessHandler";
+import {ValidatedAjaxSuccessHandler} from "./ajaxSuccessHandler";
 import {type VendingMachineReponse, type VendingMachinePurchaseType, vendingMachineResponseSchema} from "./sbFactory.types";
+import {z} from "zod";
 
-export class SBFactoryAjaxHandler extends AjaxSuccessHandler {
+export class SBFactoryAjaxHandler extends ValidatedAjaxSuccessHandler {
+    readonly schema = vendingMachineResponseSchema;
     /**
      * Create a new instance of SuperBrieFactoryHandler
      * @param logger logger to log events
      * @param submitConvertibleCallback delegate to submit convertibles to mhct
      */
     constructor(
-        private readonly logger: LoggerService,
+        logger: LoggerService,
         private readonly submissionService: SubmissionService) {
-        super();
+        super(logger);
     }
 
     /**
@@ -27,11 +28,7 @@ export class SBFactoryAjaxHandler extends AjaxSuccessHandler {
         return url.includes("mousehuntgame.com/managers/ajax/events/birthday_factory.php");
     }
 
-    async execute(responseJSON: HgResponse): Promise<void> {
-        if (!this.isVendingMachineResponse(responseJSON)) {
-            return;
-        }
-
+    async validatedExecute(responseJSON: z.infer<typeof this.schema>): Promise<void> {
         await this.recordSnackPack(responseJSON);
     }
 
@@ -107,21 +104,5 @@ export class SBFactoryAjaxHandler extends AjaxSuccessHandler {
 
         this.logger.debug('SBFactoryAjaxHandler submitting snack pack', {convertible, items});
         await this.submissionService.submitEventConvertible(convertible, items);
-    }
-
-    /**
-     * Validates that the given object is a JSON response from interacting with vending machine
-     * @param responseJSON
-     * @returns
-     */
-    private isVendingMachineResponse(responseJSON: unknown): responseJSON is VendingMachineReponse {
-        const response = vendingMachineResponseSchema.safeParse(responseJSON);
-
-        if (!response.success) {
-            const errorMessage = response.error.message;
-            this.logger.warn("Unexpected vending machine response object.", errorMessage);
-        }
-
-        return response.success;
     }
 }

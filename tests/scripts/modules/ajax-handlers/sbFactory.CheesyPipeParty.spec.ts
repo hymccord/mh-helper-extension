@@ -52,7 +52,7 @@ describe("CheesyPipePartyAjaxHandler", () => {
 
             await handler.execute(response);
 
-            expect(logger.warn).toHaveBeenCalledWith('Unexpected Cheesy Pipe Party response object.', expect.anything());
+            expect(logger.warn).toHaveBeenCalledWith('Couldn\'t validate JSON response', expect.anything());
             expect(submissionService.submitEventConvertible).toHaveBeenCalledTimes(0);
         });
 
@@ -141,7 +141,7 @@ describe("CheesyPipePartyAjaxHandler", () => {
 
             await handler.execute(response);
 
-            expect(logger.warn).toHaveBeenCalledWith('Unexpected Cheesy Pipe Party response object.', expect.anything());
+            expect(logger.warn).toHaveBeenCalledWith('Couldn\'t validate JSON response', expect.anything());
             expect(submissionService.submitEventConvertible).toHaveBeenCalledTimes(0);
         });
     });

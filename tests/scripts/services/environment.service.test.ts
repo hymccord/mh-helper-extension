@@ -1,6 +1,8 @@
 
 import {EnvironmentService} from '@scripts/services/environment.service';
 
+const localhostUrl = 'http://localhost:8080';
+
 describe('EnvironmentService', () => {
     let service: EnvironmentService;
     let mockGetVersion: jest.Mock<number>;
@@ -23,14 +25,14 @@ describe('EnvironmentService', () => {
             mockGetVersion.mockReturnValue(undefined as unknown as number);
             service = new EnvironmentService(mockGetVersion);
 
-            expect(service.getBaseUrl()).toBe('http://localhost');
+            expect(service.getBaseUrl()).toBe(localhostUrl);
         });
 
         it('returns localhost URL when version is 0', () => {
             mockGetVersion.mockReturnValue(0);
             service = new EnvironmentService(mockGetVersion);
 
-            expect(service.getBaseUrl()).toBe('http://localhost');
+            expect(service.getBaseUrl()).toBe(localhostUrl);
         });
 
         it('returns production URL when version is a positive number', () => {
@@ -42,7 +44,7 @@ describe('EnvironmentService', () => {
     });
 
     describe.each<{version: number, expectedBaseUrl: string}>([
-        {version: 0, expectedBaseUrl: 'http://localhost'},
+        {version: 0, expectedBaseUrl: localhostUrl},
         {version: 1, expectedBaseUrl: 'https://www.mhct.win'},
     ])('URL generation', ({version, expectedBaseUrl}) => {
         beforeEach(() => {

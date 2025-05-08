@@ -1,18 +1,20 @@
 import {LoggerService} from "@scripts/util/logger";
-import {AjaxSuccessHandler} from "./ajaxSuccessHandler";
-import {HgResponse, JournalMarkup} from "@scripts/types/hg";
+import {ValidatedAjaxSuccessHandler} from "./ajaxSuccessHandler";
+import {HgResponse, hgResponseSchema, JournalMarkup} from "@scripts/types/hg";
 import {BeanstalkRarityPayload} from "./beanstalkRoomTracker.types";
 import {CastleAttributes, Embellishment} from "@scripts/types/hg/quests";
 
 /**
  * Reports room rarities so they can be analyzed with other tools
  */
-export class BountifulBeanstalkRoomTrackerAjaxHandler extends AjaxSuccessHandler {
+export class BountifulBeanstalkRoomTrackerAjaxHandler extends ValidatedAjaxSuccessHandler {
+    readonly schema = hgResponseSchema;
+
     constructor(
-        private logger: LoggerService,
+        logger: LoggerService,
         private showFlashMessage: (type: "error" | "warning" | "success", message: string) => void
     ) {
-        super();
+        super(logger);
     }
 
     public match(url: string): boolean {
@@ -28,7 +30,7 @@ export class BountifulBeanstalkRoomTrackerAjaxHandler extends AjaxSuccessHandler
         return true;
     }
 
-    public async execute(responseJSON: HgResponse): Promise<void> {
+    public async validatedExecute(responseJSON: HgResponse): Promise<void> {
 
         const {user} = responseJSON;
         if (user.environment_name != "Bountiful Beanstalk") {

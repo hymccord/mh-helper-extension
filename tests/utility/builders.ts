@@ -1,3 +1,4 @@
+import {mergician} from "mergician";
 import {HgResponse, InventoryItem, JournalMarkup, Quests, User} from "@scripts/types/hg";
 import {IntakeMessage} from "@scripts/types/mhct";
 
@@ -8,7 +9,7 @@ import {IntakeMessage} from "@scripts/types/mhct";
 export class HgResponseBuilder {
 
     activeTurn?: boolean;
-    user?: User;
+    user?: PartialDeep<User>;
     page?: unknown;
     journalMarkup?: JournalMarkup[];
     inventory?: Record<string, InventoryItem>;
@@ -19,7 +20,7 @@ export class HgResponseBuilder {
         return this;
     }
 
-    withUser(user: User) {
+    withUser(user: PartialDeep<User>) {
         this.user = user;
         return this;
     }
@@ -46,12 +47,12 @@ export class HgResponseBuilder {
     }
 
     public build(): HgResponse {
-        this.user ??= new UserBuilder().build();
+        const defaultUser = new UserBuilder().build();
 
         return {
             success: 1,
             active_turn: this.activeTurn,
-            user: this.user,
+            user: mergician(defaultUser, this.user ?? {}) as unknown as User,
             page: this.page,
             journal_markup: this.journalMarkup,
             inventory: this.inventory,

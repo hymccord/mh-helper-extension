@@ -1,8 +1,9 @@
 import {mergician} from "mergician";
 import {BountifulBeanstalkRoomTrackerAjaxHandler} from "@scripts/modules/ajax-handlers";
-import {HgResponse} from "@scripts/types/hg";
+import {HgResponse, QuestBountifulBeanstalk, User} from "@scripts/types/hg";
 import {ConsoleLogger} from "@scripts/util/logger";
 import type {BeanstalkRarityPayload} from "@scripts/modules/ajax-handlers/beanstalkRoomTracker.types";
+import {HgResponseBuilder} from "@tests/utility/builders";
 
 jest.mock("@scripts/util/logger");
 global.fetch = jest.fn(() =>
@@ -23,9 +24,9 @@ const beanstalkUrl =
     "mousehuntgame.com/managers/ajax/environment/bountiful_beanstalk.php";
 
 describe("BountifulBeanstalkRoomTrackerAjaxHandler", () => {
+    const responseBuilder = new HgResponseBuilder();
     beforeEach(() => {
         jest.clearAllMocks();
-        jest.resetModules();
     });
 
     describe("match", () => {
@@ -47,13 +48,12 @@ describe("BountifulBeanstalkRoomTrackerAjaxHandler", () => {
 
     describe("execute", () => {
         it("should ignore if not in bountiful beanstalk", async () => {
-            await handler.execute(
-                getDefaultResponse({
-                    user: {
-                        environment_name: "Server Room",
-                    },
+            const response = responseBuilder
+                .withUser({
+                    environment_name: "Server Room",
                 })
-            );
+                .build();
+            await handler.execute(response);
 
             expect(logger.debug).toHaveBeenCalledWith(
                 "BBRoomTracker: Not in BB environment"
@@ -61,23 +61,35 @@ describe("BountifulBeanstalkRoomTrackerAjaxHandler", () => {
         });
 
         it("should log if there are too many journal entries", async () => {
-            await handler.execute(
-                getDefaultResponse({
-                    active_turn: undefined,
-                    journal_markup: [
-                        {
-                            render_data: {
-                                css_class: "",
-                            },
+            const response = responseBuilder
+                .withActiveTurn(false)
+                .withUser(getDefaultUser({}))
+                .withJournalMarkup([
+                    {
+                        render_data: {
+                            css_class: "",
+                            entry_id: 0,
+                            mouse_type: "",
+                            entry_date: "",
+                            environment: "",
+                            entry_timestamp: 0,
+                            text: ""
                         },
-                        {
-                            render_data: {
-                                css_class: "",
-                            },
+                    },
+                    {
+                        render_data: {
+                            css_class: "",
+                            entry_id: 0,
+                            mouse_type: "",
+                            entry_date: "",
+                            environment: "",
+                            entry_timestamp: 0,
+                            text: ""
                         },
-                    ],
-                })
-            );
+                    },
+                ])
+                .build();
+            await handler.execute(response);
 
             expect(logger.debug).toHaveBeenCalledWith(
                 "BBRoomTracker: Didn't plant vine or too many journal entries (2 entries)"
@@ -85,18 +97,20 @@ describe("BountifulBeanstalkRoomTrackerAjaxHandler", () => {
         });
 
         it("should ignore if not in castle", async () => {
-            await handler.execute(
-                getDefaultResponse({
-                    active_turn: true,
-                    user: {
-                        quests: {
-                            QuestBountifulBeanstalk: {
-                                in_castle: false,
-                            },
+            const response = responseBuilder
+                .withActiveTurn(true)
+                .withUser(getDefaultUser({
+                    quests: {
+                        QuestBountifulBeanstalk: {
+                            in_castle: false,
+                            beanstalk: {
+                                is_boss_encounter: false,
+                            }
                         },
                     },
-                })
-            );
+                }))
+                .build();
+            await handler.execute(response);
 
             expect(logger.debug).toHaveBeenCalledWith(
                 "BBRoomTracker: User not in castle"
@@ -104,11 +118,11 @@ describe("BountifulBeanstalkRoomTrackerAjaxHandler", () => {
         });
 
         it("should ignore if not suitable room position", async () => {
-            await handler.execute(
-                getDefaultResponse({
-                    active_turn: true,
-                })
-            );
+            const response = responseBuilder
+                .withActiveTurn(true)
+                .withUser(getDefaultUser({}))
+                .build();
+            await handler.execute(response);
 
             expect(logger.debug).toHaveBeenCalledWith(
                 "BBRoomTracker: User not in a submittable position"
@@ -116,8 +130,8 @@ describe("BountifulBeanstalkRoomTrackerAjaxHandler", () => {
         });
 
         it("should submit if user just planted vine", async () => {
-            await handler.execute(getDefaultResponse({
-                user: {
+            const response = responseBuilder
+                .withUser(getDefaultUser({
                     quests: {
                         QuestBountifulBeanstalk: {
                             castle: {
@@ -125,15 +139,22 @@ describe("BountifulBeanstalkRoomTrackerAjaxHandler", () => {
                             },
                         },
                     },
-                },
-                journal_markup: [
+                }))
+                .withJournalMarkup([
                     {
                         render_data: {
                             css_class: 'bountifulBeanstalk-plantedVine',
+                            entry_id: 0,
+                            mouse_type: "",
+                            entry_date: "",
+                            environment: "",
+                            entry_timestamp: 0,
+                            text: ""
                         },
                     },
-                ],
-            }));
+                ])
+                .build();
+            await handler.execute(response);
 
             const expectedData: BeanstalkRarityPayload = {
                 version: 1,
@@ -161,9 +182,8 @@ describe("BountifulBeanstalkRoomTrackerAjaxHandler", () => {
         });
 
         it("should submit if user just entered new room", async () => {
-            await handler.execute(getDefaultResponse({
-                active_turn: true,
-                user: {
+            const response = responseBuilder
+                .withUser(getDefaultUser({
                     quests: {
                         QuestBountifulBeanstalk: {
                             in_castle: true,
@@ -173,8 +193,9 @@ describe("BountifulBeanstalkRoomTrackerAjaxHandler", () => {
                             },
                         },
                     },
-                },
-            }));
+                }))
+                .build();
+            await handler.execute(response);
 
             const expectedData: BeanstalkRarityPayload = {
                 version: 1,
@@ -202,9 +223,9 @@ describe("BountifulBeanstalkRoomTrackerAjaxHandler", () => {
         });
 
         it("should submit next room if user just triggered chase", async () => {
-            await handler.execute(getDefaultResponse({
-                active_turn: true,
-                user: {
+            const response = responseBuilder
+                .withActiveTurn(true)
+                .withUser(getDefaultUser({
                     quests: {
                         QuestBountifulBeanstalk: {
                             castle: {
@@ -218,9 +239,10 @@ describe("BountifulBeanstalkRoomTrackerAjaxHandler", () => {
                                 },
                             },
                         },
-                    },
-                },
-            }));
+                    }
+                }))
+                .build();
+            await handler.execute(response);
 
             const expectedData: BeanstalkRarityPayload = {
                 version: 1,
@@ -252,9 +274,10 @@ describe("BountifulBeanstalkRoomTrackerAjaxHandler", () => {
             global.fetch = jest.fn(() => {
                 throw err;
             });
-            await handler.execute(getDefaultResponse({
-                active_turn: true,
-                user: {
+
+            const response = responseBuilder
+                .withActiveTurn(true)
+                .withUser(getDefaultUser({
                     quests: {
                         QuestBountifulBeanstalk: {
                             castle: {
@@ -263,8 +286,9 @@ describe("BountifulBeanstalkRoomTrackerAjaxHandler", () => {
                             },
                         },
                     },
-                },
-            }));
+                }))
+                .build();
+            await handler.execute(response);
 
             expect(logger.debug).toHaveBeenCalledWith(
                 "BBRoomTracker: Submitting next room"
@@ -282,9 +306,10 @@ describe("BountifulBeanstalkRoomTrackerAjaxHandler", () => {
                     ok: false,
                 })
             ) as jest.Mock;
-            await handler.execute(getDefaultResponse({
-                active_turn: true,
-                user: {
+
+            const response = responseBuilder
+                .withActiveTurn(true)
+                .withUser(getDefaultUser({
                     quests: {
                         QuestBountifulBeanstalk: {
                             castle: {
@@ -293,8 +318,9 @@ describe("BountifulBeanstalkRoomTrackerAjaxHandler", () => {
                             },
                         },
                     },
-                },
-            }));
+                }))
+                .build();
+            await handler.execute(response);
 
             expect(logger.debug).toHaveBeenCalledWith(
                 "BBRoomTracker: Submitting next room"
@@ -313,42 +339,44 @@ describe("BountifulBeanstalkRoomTrackerAjaxHandler", () => {
      *
      * In castle. Dungeon. Current room: 8M. Next room: 2S. Embellishments: K.
      */
-    function getDefaultResponse(overrides: object): HgResponse {
+    function getDefaultUser(overrides: PartialDeep<User>): Partial<User> {
         return mergician(
             {
-                user: {
-                    environment_name: "Bountiful Beanstalk",
-                    quests: {
-                        QuestBountifulBeanstalk: {
-                            in_castle: true,
-                            castle: {
-                                is_boss_chase: false,
-                                room_position: 10,
-                                current_floor: {
-                                    type: "dungeon_floor",
-                                },
-                                current_room: {
-                                    type: "magic_bean_ultimate_room",
-                                },
-                                next_room: {
-                                    type: "string_super_room",
-                                },
+                environment_name: "Bountiful Beanstalk",
+                quests: {
+                    QuestBountifulBeanstalk: {
+                        in_castle: true,
+                        castle: {
+                            is_boss_chase: false,
+                            is_boss_encounter: false,
+                            current_floor: {
+                                type: "dungeon_floor",
+                                name: "Dungeon",
                             },
-                            embellishments: [
-                                {
-                                    type: "golden_key",
-                                    is_active: true,
-                                },
-                                {
-                                    type: "ruby_remover",
-                                    is_active: false,
-                                },
-                            ],
+                            current_room: {
+                                type: "magic_bean_ultimate_room",
+                                name: "Ultimate Magic Bean Room",
+                            },
+                            next_room: {
+                                type: "string_super_room",
+                                name: "Super Harp String Room"
+                            },
+                            room_position: 10,
                         },
+                        embellishments: [
+                            {
+                                type: "golden_key",
+                                is_active: true,
+                            },
+                            {
+                                type: "ruby_remover",
+                                is_active: false,
+                            },
+                        ],
                     },
                 },
             },
             overrides
-        ) as HgResponse;
+        );
     }
 });
