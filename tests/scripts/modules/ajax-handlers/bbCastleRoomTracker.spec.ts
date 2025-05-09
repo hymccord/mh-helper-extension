@@ -1,18 +1,19 @@
 import {mergician} from "mergician";
 import {BountifulBeanstalkRoomTrackerAjaxHandler} from "@scripts/modules/ajax-handlers";
 import {HgResponse} from "@scripts/types/hg";
-import {ConsoleLogger} from "@scripts/util/logger";
+import {LoggerService} from "@scripts/util/logger";
 import type {BeanstalkRarityPayload} from "@scripts/modules/ajax-handlers/beanstalkRoomTracker.types";
+import {mock} from "vitest-mock-extended";
 
-jest.mock("@scripts/util/logger");
-global.fetch = jest.fn(() =>
+// @ts-expect-error override fetch for now
+global.fetch = vi.fn(() =>
     Promise.resolve({
         ok: true,
     })
-) as jest.Mock;
+);
 
-const logger = new ConsoleLogger();
-const showFlashMessage = jest.fn();
+const logger = mock<LoggerService>();
+const showFlashMessage = vi.fn();
 const handler = new BountifulBeanstalkRoomTrackerAjaxHandler(
     logger,
     showFlashMessage
@@ -24,8 +25,8 @@ const beanstalkUrl =
 
 describe("BountifulBeanstalkRoomTrackerAjaxHandler", () => {
     beforeEach(() => {
-        jest.clearAllMocks();
-        jest.resetModules();
+        vi.clearAllMocks();
+        vi.resetModules();
     });
 
     describe("match", () => {
@@ -249,7 +250,7 @@ describe("BountifulBeanstalkRoomTrackerAjaxHandler", () => {
 
         it("should log an error if fetch throws", async () => {
             const err = new Error();
-            global.fetch = jest.fn(() => {
+            global.fetch = vi.fn(() => {
                 throw err;
             });
             await handler.execute(getDefaultResponse({
@@ -277,11 +278,12 @@ describe("BountifulBeanstalkRoomTrackerAjaxHandler", () => {
         });
 
         it("should log a warning if response is not OK", async () => {
-            global.fetch = jest.fn(() =>
+            // @ts-expect-error override fetch for now
+            global.fetch = vi.fn(() =>
                 Promise.resolve({
                     ok: false,
                 })
-            ) as jest.Mock;
+            );
             await handler.execute(getDefaultResponse({
                 active_turn: true,
                 user: {

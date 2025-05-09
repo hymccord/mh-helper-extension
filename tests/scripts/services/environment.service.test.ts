@@ -3,11 +3,10 @@ import {EnvironmentService} from '@scripts/services/environment.service';
 
 describe('EnvironmentService', () => {
     let service: EnvironmentService;
-    let mockGetVersion: jest.Mock<number>;
+    const mockGetVersion = vi.fn();
 
     beforeEach(() => {
-        jest.clearAllMocks();
-        mockGetVersion = jest.fn<number, []>();
+        vi.clearAllMocks();
     });
 
     describe('initialization', () => {

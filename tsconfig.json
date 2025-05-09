@@ -21,7 +21,10 @@
     "paths": {
       "@scripts/*":["./src/scripts/*"],
       "@tests/*": ["./tests/*"]
-    }
+    },
+    "types": [
+      "vitest/globals",
+    ]
   },
   "include": ["src/**/*", "tests/**/*"]
 }
