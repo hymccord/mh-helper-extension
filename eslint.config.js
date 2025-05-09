@@ -14,7 +14,10 @@ export default tseslint.config(
         languageOptions: {
             parserOptions: {
                 projectService: {
-                    allowDefaultProject: ['eslint.config.mjs']
+                    allowDefaultProject: [
+                        'eslint.config.js',
+                        'vitest.config.ts',
+                    ]
                 },
                 tsconfigRootDir: import.meta.dirname,
             },
@@ -41,7 +44,7 @@ export default tseslint.config(
         rules: {
             'array-bracket-newline': ['error', 'consistent'],
             'comma-dangle': ['error', 'only-multiline'],
-            'indent': ['error', 4, { SwitchCase: 1, outerIIFEBody: 'off', }],
+            'indent': ['error', 4, {SwitchCase: 1, outerIIFEBody: 'off'}],
             'no-constant-binary-expression': ['error'],
             'no-unneeded-ternary': ['error'],
             'no-var': ['warn'],
@@ -50,7 +53,7 @@ export default tseslint.config(
             'object-curly-newline': ['error'],
             'prefer-const': ['error'],
             'semi': ['error', 'always'],
-            '@typescript-eslint/no-unused-vars': ['error', { args: 'none' }],
+            '@typescript-eslint/no-unused-vars': ['error', {args: 'none'}],
         }
     },
 

@@ -1,5 +1,5 @@
-const path = require('path');
-const { got } = require('got-cjs');
+import { join } from 'path';
+import { got } from 'got-cjs';
 
 /** @typedef {import('webpack').Compiler} Compiler */
 
@@ -53,7 +53,7 @@ class RemoteDownloadFileWebpackPlugin {
                             compilation.errors.push(/** @type {WebpackError} */ (error));
                         }
 
-                        const destPath = path.join(assetPack.pathPrefix, file);
+                        const destPath = join(assetPack.pathPrefix, file);
                         const { RawSource } = compiler.webpack.sources;
                         compilation.emitAsset(
                             destPath,
@@ -68,4 +68,4 @@ class RemoteDownloadFileWebpackPlugin {
     }
 }
 
-module.exports = RemoteDownloadFileWebpackPlugin;
+export default RemoteDownloadFileWebpackPlugin;

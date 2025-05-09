@@ -52,6 +52,7 @@
     "test": "jest"
   },
   "private": true,
+  "type": "module",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/mh-community-tools/mh-helper-extension.git"

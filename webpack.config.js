@@ -1,17 +1,22 @@
-const path = require('path');
+import { resolve as _resolve, dirname } from 'path';
+import { fileURLToPath } from 'url';
 
-const CopyWebpackPlugin = require('copy-webpack-plugin');
-const HtmlWebpackPlugin = require('html-webpack-plugin');
-const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
-const { TsconfigPathsPlugin } = require('tsconfig-paths-webpack-plugin');
-const RemoteDownloadFileWebpackPlugin = require('./webpack/RemoteDownloadFileWebpackPlugin.js');
+import CopyWebpackPlugin from 'copy-webpack-plugin';
+import HtmlWebpackPlugin from 'html-webpack-plugin';
+import ForkTsCheckerWebpackPlugin from 'fork-ts-checker-webpack-plugin';
+import { TsconfigPathsPlugin } from 'tsconfig-paths-webpack-plugin';
+import RemoteDownloadFileWebpackPlugin from './webpack/RemoteDownloadFileWebpackPlugin.js';
+
+// Create __dirname equivalent for ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 /**
  * @param {Object} env - Environment configuration
  * @param {('firefox'| undefined)} env.browser - Target browser
  * @param {('production'| undefined )} env.mode - Build mode
  */
-module.exports = (env) => {
+export default (env) => {
     const manifest = env.browser === 'firefox' ? 'manifest.v3.firefox.json' : 'manifest.v3.chrome.json';
     const devtool = env.mode === 'production' ? 'inline-source-map' : 'inline-cheap-module-source-map';
     /**
@@ -27,7 +32,7 @@ module.exports = (env) => {
             theme: './src/scripts/theme.js',
         },
         output: {
-            path: path.resolve(__dirname, 'dist', env.browser ?? 'chrome'),
+            path: _resolve(__dirname, 'dist', env.browser ?? 'chrome'),
             filename: 'scripts/[name].js',
             clean: true,
         },
