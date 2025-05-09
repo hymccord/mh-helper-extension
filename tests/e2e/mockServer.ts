@@ -12,6 +12,9 @@ export default class MockServer {
     private pageInterceptor?: nock.Interceptor;
     private activeTurnInterceptor?: nock.Interceptor;
 
+    capturedIntake?: unknown;
+    capturedConvertible?: unknown;
+
     public get MhctServer(): nock.Scope {
         return this.mhctServer;
     }
@@ -36,12 +39,24 @@ export default class MockServer {
         this.mhctServer
             .persist()
             .post("/convertible_intake.php")
-            .reply(200);
+            .reply(200, (uri, body) => {
+                this.capturedConvertible = body;
+                return {
+                    status: "success",
+                    message: "Thanks for the convertible info!",
+                }
+            });
 
         this.mhctServer
             .persist()
             .post("/intake.php")
-            .reply(200);
+            .reply(200, (uri, body) => {
+                this.capturedIntake = body;
+                return {
+                    status: "success",
+                    message: "Thanks for the hunt info!",
+                }
+            });
     }
 
     /**

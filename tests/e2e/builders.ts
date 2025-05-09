@@ -56,7 +56,7 @@ type UserTrinket = Pick<User, 'trinket_name' | 'trinket_item_id'>;
 export class UserBuilder {
     identification: UserIdentification = {
         user_id: 1,
-        sn_user_id: 2,
+        sn_user_id: '2',
         unique_hash: 'hashbrowns',
         has_shield: true,
     };
