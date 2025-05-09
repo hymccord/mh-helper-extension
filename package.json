@@ -70,6 +70,7 @@
     "fork-ts-checker-webpack-plugin": "^9.1.0",
     "globals": "^16.0.0",
     "got-cjs": "^12.5.4",
+    "happy-dom": "^17.4.6",
     "html-webpack-plugin": "^5.6.3",
     "jquery": "^3.6.4",
     "mergician": "^2.0.2",

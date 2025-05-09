@@ -14,26 +14,27 @@ declare global {
 export async function e2eSetup() {
     const mainLoaded = setupMain();
     // https://github.com/nock/nock/issues/2200
-    jest
-        .useFakeTimers({
-            doNotFake: [
-                'nextTick',
-                'setImmediate',
-                'clearImmediate',
-                'setInterval',
-                'clearInterval',
-                'setTimeout',
-                'clearTimeout',
-            ],
-        })
-        .setSystemTime(1212121000);
+    // vi
+    //     .useFakeTimers({
+    //         toFake: [
+    //             // 'cancelAnimationFrame',
+    //             // 'cancelIdleCallback',
+    //             // 'Date',
+    //             // 'hrtime',
+    //             // 'performance',
+    //             // 'queueMicrotask',
+    //             // 'requestAnimationFrame',
+    //             // 'requestIdleCallback',
+    //         ]
+    //     })
+    //     .setSystemTime(1212121000);
 
-    import('@scripts/main');
+    await import('@scripts/main.js');
     await mainLoaded;
 }
 
 export function e2eTeardown() {
-    jest.useRealTimers();
+    vi.useRealTimers();
 }
 
 function setupMain() {
@@ -62,7 +63,7 @@ function setupMain() {
 function mockConsole(): void {
     const consoleFuncsToMock: (keyof Console)[] = ['debug', 'info', 'log', 'warn'];
     consoleFuncsToMock.map(v => {
-        global.console[v] = jest.fn();
+        global.console[v] = vi.fn();
     });
 }
 

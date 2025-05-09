@@ -7,7 +7,7 @@ import {ConvertibleMessageBuilder, HgResponseBuilder, IntakeMessageBuilder, User
 import {HgConvertibleResponse} from '@scripts/types/hg';
 
 // Dont run any legacy js for now. It isn't strongly typed yet (mostly quests for detailers).
-jest.mock('@scripts/modules/details/legacy');
+vi.mock('@scripts/modules/details/legacy');
 
 describe('mhct intake', () => {
     let server: MockServer;
@@ -72,18 +72,21 @@ describe('mhct intake', () => {
 
         server.setActiveTurnResponse(response);
 
+        const x = await fetch('http://localhost/uuid.php', {
+            method: 'POST',
+        }).then((res) => res.text());
+
+        const y = await $.post('http://localhost/uuid.php');
         // Simulate hitting horn
         $.post('https://www.mousehuntgame.com/managers/ajax/turns/activeturn.php');
 
         await new Promise(resolve => setTimeout(resolve, 10000));
         // const data = await postedDataPromise;
 
-        console.log(server.capturedIntake);
-
         const expectedMessage = new IntakeMessageBuilder()
             .build(response);
 
-        // expect(data).toEqual(expect.objectContaining(expectedMessage));
+        expect(server.capturedIntake).toEqual(expect.objectContaining(expectedMessage));
     }, 60000);
 
     it('should process an opened convertible', async () => {

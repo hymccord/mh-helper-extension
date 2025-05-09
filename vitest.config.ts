@@ -18,6 +18,8 @@ export default defineConfig({
     //   deps: {
     //     interopDefault: true
     //   }
+        setupFiles: ['./tests/setup-env.ts'],
+        environment: 'happy-dom'
     },
     plugins: [tsConfigPaths()]
 });
