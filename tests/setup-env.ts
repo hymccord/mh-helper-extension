@@ -1,4 +1,4 @@
-import nock from 'nock';
+// import nock from 'nock';
 
-// Throw if any real requests are made that aren't mocked
-nock.disableNetConnect();
+// // Throw if any real requests are made that aren't mocked
+// nock.disableNetConnect();

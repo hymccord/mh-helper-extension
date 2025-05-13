@@ -34,7 +34,9 @@ export default class MockServer {
         this.mhctServer
             .persist()
             .post("/uuid.php")
-            .reply(200, "1", {"content-type": "text/html"});
+            .reply(200, (uri, body) => {
+                return "1";
+            }, {"content-type": "text/html"});
 
         this.mhctServer
             .persist()
@@ -99,7 +101,9 @@ export default class MockServer {
         this.activeTurnInterceptor = this.hgServer.post(
             "/managers/ajax/turns/activeturn.php"
         );
-        this.activeTurnInterceptor.reply(200, response);
+        this.activeTurnInterceptor.reply(200, (uri, body) => {
+            return response;
+        });
     }
 
     private waitForAjaxSend(url: string, msTimeout = 5000) {

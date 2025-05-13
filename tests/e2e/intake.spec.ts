@@ -28,6 +28,30 @@ describe('mhct intake', () => {
         e2eTeardown();
     });
 
+    it('test', async () => {
+
+
+
+        server.setActiveTurnResponse(new HgResponseBuilder().withUser(new UserBuilder().build()).build());
+
+        let x = await fetch('http://localhost/uuid.php', {
+            method: 'POST',
+        }).then((res) => res.text());
+        let y = $.ajax({
+            url: 'http://localhost/uuid.php',
+            type: 'POST',
+
+        }).done((data) => {
+            console.log('done', data);
+        });
+        // Simulate hitting horn
+        x = await fetch('https://www.mousehuntgame.com/managers/ajax/turns/activeturn.php', {
+            method: 'POST',
+        }).then((res) => res.json());
+
+        $.post('https://www.mousehuntgame.com/managers/ajax/turns/activeturn.php');
+    });
+
     it('should process an active hunt', async () => {
         const userBuilder = new UserBuilder();
         let user = userBuilder.build();

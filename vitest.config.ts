@@ -18,8 +18,20 @@ export default defineConfig({
     //   deps: {
     //     interopDefault: true
     //   }
+    browser: {
+        enabled: true,
+        provider: 'playwright',
+        instances: [
+          {
+            browser: 'chromium',
+
+          },
+          {
+            browser: 'firefox',
+          },
+        ],
+      },
         setupFiles: ['./tests/setup-env.ts'],
-        environment: 'happy-dom'
     },
     plugins: [tsConfigPaths()]
 });

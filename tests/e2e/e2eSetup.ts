@@ -115,17 +115,17 @@ function setupWindowGlobals() {
     window.$ = window.jQuery = $;
 
     // Used for creating hunter_id_hash
-    Object.defineProperty(window, 'crypto', {
-        get(){
-            return {
-                subtle: {
-                    digest: (algorithm: AlgorithmIdentifier, data: ArrayBuffer): Promise<ArrayBuffer> => {
-                        return Promise.resolve(new Uint8Array([1, 2, 3, 4]));
-                    },
-                },
-            };
-        },
-    });
+    // Object.defineProperty(window, 'crypto', {
+    //     get(){
+    //         return {
+    //             subtle: {
+    //                 digest: (algorithm: AlgorithmIdentifier, data: ArrayBuffer): Promise<ArrayBuffer> => {
+    //                     return Promise.resolve(new Uint8Array([1, 2, 3, 4]));
+    //                 },
+    //             },
+    //         };
+    //     },
+    // });
 
     // MH globals
     Object.assign(window, {
