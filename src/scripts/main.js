@@ -11,6 +11,7 @@ import * as successHandlers from './modules/ajax-handlers';
 import * as detailers from './modules/details';
 import * as stagers from './modules/stages';
 import * as detailingFuncs from './modules/details/legacy';
+import {InterceptorService} from "./services/interceptor.service";
 
 (function () {
     'use strict';
@@ -40,6 +41,7 @@ import * as detailingFuncs from './modules/details/legacy';
         new successHandlers.SpookyShuffleAjaxHandler(logger, submissionService),
         new successHandlers.TreasureMapHandler(logger, submissionService),
     ];
+    const interceptor = new InterceptorService(logger);
 
     async function main() {
         try {
@@ -51,6 +53,7 @@ import * as detailingFuncs from './modules/details/legacy';
             await initialLoad();
             addWindowMessageListeners();
             addAjaxHandlers();
+            interceptor.init();
             finalLoad();
         } catch (error) {
             logger.error("Failed to initialize.", error);
@@ -360,7 +363,7 @@ import * as detailingFuncs from './modules/details/legacy';
     // Listening routers
     function addAjaxHandlers() {
         if (userSettings['tracking-hunts']) {
-            $(document).ajaxSend(getUserBeforeHunting);
+            // $(document).ajaxSend(getUserBeforeHunting);
         }
 
         $(document).ajaxSuccess((event, xhr, ajaxOptions) => {
@@ -391,11 +394,9 @@ import * as detailingFuncs from './modules/details/legacy';
                 // Invalid url, JSON, or response is not JSON
             }
 
-            if (userSettings['tracking-events']) {
-                for (const handler of ajaxSuccessHandlers) {
-                    if (handler.match(url)) {
-                        handler.execute(xhr.responseJSON);
-                    }
+            for (const handler of ajaxSuccessHandlers) {
+                if (handler.match(url)) {
+                    handler.execute(xhr.responseJSON);
                 }
             }
         });
