@@ -36,7 +36,7 @@ export class EnvironmentService {
 
     getBaseUrl(): string {
         if (this.version === undefined || this.version === 0) {
-            return "http://localhost";
+            return "http://localhost:8080";
         }
 
         return "https://www.mhct.win";
