@@ -1,6 +1,6 @@
 import {LoggerService} from "@scripts/util/logger";
 import {ApiService} from "./api.service";
-import {z} from "zod";
+import {z} from "zod/v4";
 
 export class MouseRipApiService {
     constructor(private readonly logger: LoggerService,

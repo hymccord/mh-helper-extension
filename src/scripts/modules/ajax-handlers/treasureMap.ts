@@ -1,6 +1,6 @@
 import {hgResponseSchema} from "@scripts/types/hg";
 import {ValidatedAjaxSuccessHandler} from "./ajaxSuccessHandler";
-import {z} from "zod";
+import {z} from "zod/v4";
 import {SubmissionService} from "@scripts/services/submission.service";
 import {LoggerService} from "@scripts/util/logger";
 

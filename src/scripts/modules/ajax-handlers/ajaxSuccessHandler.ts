@@ -1,6 +1,6 @@
 import type {HgResponse} from "@scripts/types/hg";
 import {LoggerService} from "@scripts/util/logger";
-import {z} from "zod";
+import {z} from "zod/v4";
 
 export abstract class AjaxSuccessHandler {
     abstract match(url: string): boolean;

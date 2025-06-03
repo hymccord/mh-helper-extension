@@ -3,7 +3,7 @@ import {SubmissionService} from "@scripts/services/submission.service";
 import {hgResponseSchema} from "@scripts/types/hg";
 import {HgItem} from "@scripts/types/mhct";
 import {LoggerService} from "@scripts/util/logger";
-import {z} from "zod";
+import {z} from "zod/v4";
 
 export class UseConvertibleAjaxHandler extends ValidatedAjaxSuccessHandler {
     schema = hgResponseSchema.extend({

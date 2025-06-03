@@ -1,4 +1,4 @@
-import {z} from "zod";
+import {z} from "zod/v4";
 import {environmentAttributesSchema} from "./environmentAttributes";
 import {viewingAttributesSchema} from "./viewingAttributes";
 import {questsSchema} from "./quests";

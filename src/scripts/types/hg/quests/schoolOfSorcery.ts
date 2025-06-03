@@ -1,4 +1,4 @@
-import {z} from "zod";
+import {z} from "zod/v4";
 
 const courseTypeSchema = z.enum(['arcane_101_course', 'shadow_101_course', 'exam_course']);
 const currentCourseSchema = z.object({

@@ -1,4 +1,4 @@
-import {z} from "zod";
+import {z} from "zod/v4";
 
 export const QuesoGeyserStates = [ 'collecting', 'corked', 'eruption', 'claim' ] as const;
 const quesoGeyserStateSchema = z.enum(QuesoGeyserStates);

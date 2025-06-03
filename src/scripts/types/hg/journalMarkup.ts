@@ -1,4 +1,4 @@
-import {z} from "zod";
+import {z} from "zod/v4";
 import {renderDataSchema} from "./renderData";
 
 export const journalMarkupSchema = z.object({

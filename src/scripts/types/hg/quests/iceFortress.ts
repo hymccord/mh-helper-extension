@@ -1,5 +1,5 @@
 import {zodRecordWithEnum} from "@scripts/util/zod";
-import {z} from "zod";
+import {z} from "zod/v4";
 
 const cannonTypeSchema = z.enum(['snow_cannon', 'cinnamon_cannon', 'charm_cannon']);
 

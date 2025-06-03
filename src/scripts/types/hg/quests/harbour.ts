@@ -1,4 +1,4 @@
-import {z} from "zod";
+import {z} from "zod/v4";
 
 export const questHarbourSchema = z.object({
     // There is probably one more state here for when can_claim is true

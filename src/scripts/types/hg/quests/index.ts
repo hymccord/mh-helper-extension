@@ -1,4 +1,4 @@
-import {z} from "zod";
+import {z} from "zod/v4";
 import {questAncientCitySchema} from "./zokor";
 import {questBalacksCoveSchema} from "./balacksCove";
 import {questBountifulBeanstalkSchema} from "./bountifulBeanstalk";

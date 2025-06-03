@@ -1,4 +1,4 @@
-import {z} from "zod";
+import {z} from "zod/v4";
 
 export const ValourRiftStates = ['farming', 'tower'] as const;
 export const valourRiftStatesSchema = z.enum(ValourRiftStates);

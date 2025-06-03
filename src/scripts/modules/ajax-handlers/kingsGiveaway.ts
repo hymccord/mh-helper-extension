@@ -5,7 +5,7 @@ import {SubmissionService} from "@scripts/services/submission.service";
 import {HgItem} from "@scripts/types/mhct";
 import {LoggerService} from "@scripts/util/logger";
 import {CustomConvertibleIds} from "@scripts/util/constants";
-import {z} from "zod";
+import {z} from "zod/v4";
 
 export class KingsGiveawayAjaxHandler extends ValidatedAjaxSuccessHandler {
     private itemCache: Record<string, number> | null = null;

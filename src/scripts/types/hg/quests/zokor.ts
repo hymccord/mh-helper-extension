@@ -1,4 +1,4 @@
-import {z} from "zod";
+import {z} from "zod/v4";
 
 export const questAncientCitySchema = z.object({
     district_name: z.string(),

@@ -1,4 +1,4 @@
-import {z, ZodEnum, ZodTypeAny} from "zod";
+import {z, ZodEnum, ZodTypeAny} from "zod/v4";
 
 /**
  * Zod's `record` when used with an `enum` key type unfortunately makes every key & value optional,
