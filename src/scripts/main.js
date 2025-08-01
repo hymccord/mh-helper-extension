@@ -569,7 +569,7 @@ import * as detailingFuncs from './modules/details/legacy';
         }
         logger.debug(`Pre (old) maximum entry id: ${max_old_entry_id}`);
 
-        const hunt = parseJournalEntries(post_response, max_old_entry_id);
+        const hunt = parseJournalEntries(pre_response, post_response, max_old_entry_id);
         if (!hunt || Object.keys(hunt).length === 0) {
             logger.info("Missing Info (trap check or friend hunt)(2)");
             return;
@@ -644,11 +644,12 @@ import * as detailingFuncs from './modules/details/legacy';
 
     /**
      * Find the active journal entry, and handle supported "bonus journals" such as the Relic Hunter attraction.
+     * @param {import("./types/hg").HgResponse} pre_hunt_response The JSON response returned before from a horn sound.
      * @param {import("./types/hg").HgResponse} hunt_response The JSON response returned from a horn sound.
      * @param {number} max_old_entry_id
      * @returns {import("./types/hg").JournalMarkup | null} The journal entry corresponding to the active hunt.
      */
-    function parseJournalEntries(hunt_response, max_old_entry_id) {
+    function parseJournalEntries(pre_hunt_response, hunt_response, max_old_entry_id) {
         /** @type {import("./types/hg").JournalMarkup & Object<string, unknown>} */
         let journal = {};
         const more_details = {};
@@ -913,6 +914,10 @@ import * as detailingFuncs from './modules/details/legacy';
             else if (css_class.search(/linked|passive|misc/) !== -1) {
                 // Ignore any friend hunts, trap checks, or custom loot journal entries.
             }
+
+            detailers.ambientEnvironmentDetailerModules
+                .filter(detailer => detailer.environment === hunt_response.user.environment_name)
+                .forEach(detailer => detailer.addDetails(message, pre_hunt_response.user, hunt_response.user, markup));
         });
         if (journal && Object.keys(journal).length) {
             // Only assign if there's an active hunt
