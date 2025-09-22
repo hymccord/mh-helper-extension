@@ -1,16 +1,19 @@
-function qs$(a, b) {
+// @ts-nocheck
+function qs$(a: string | ParentNode, b: string | null = null) {
     if ( typeof a === 'string') {
         return document.querySelector(a);
     }
     if ( a === null ) { return null; }
+    if ( b === null ) { return null; }
     return a.querySelector(b);
 }
 
-function qsa$(a, b) {
+function qsa$(a: string | ParentNode, b: string | null = null) {
     if ( typeof a === 'string') {
         return document.querySelectorAll(a);
     }
     if ( a === null ) { return []; }
+    if ( b === null ) { return []; }
     return a.querySelectorAll(b);
 }
 

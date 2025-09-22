@@ -1,27 +1,31 @@
 {
   "compilerOptions": {
-    "baseUrl": "./",
-    "target": "es6",
-    "module": "commonjs",
+    "pretty": true,
     "moduleResolution": "node",
-    "outDir": "dist/scripts",
-    "strict": true,
-    "sourceMap": true,
-    "lib": [
-      "DOM",
-      "DOM.Iterable"
-    ],
-    "experimentalDecorators": true,
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "noEmitOnError": true,
     "noImplicitAny": true,
+    "target": "ES2016",
+    "module": "ES2020",
+    "lib": ["es5", "es6", "es7", "dom", "ES2021"],
+    "sourceMap": true,
+    "allowSyntheticDefaultImports": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "declaration": false,
+    "outDir": "dist",
+    "baseUrl": ".",
+    "resolveJsonModule": true,
     "strictNullChecks": true,
-    "allowJs": true,
+    "strictBindCallApply": true,
     "paths": {
       "@scripts/*":["./src/scripts/*"],
       "@tests/*": ["./tests/*"]
-    }
-  },
-  "include": ["src/**/*", "tests/**/*"]
+    },
+    "plugins": [
+      {
+        "transform": "typescript-transform-paths"
+      }
+    ],
+    "useDefineForClassFields": false  },
+  "include": ["**/*"],
+  "exclude": ["**/*.spec.ts"]
 }

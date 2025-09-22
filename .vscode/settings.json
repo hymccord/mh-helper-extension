@@ -2,5 +2,13 @@
     "editor.codeActionsOnSave": {
         "source.fixAll": "always",
         "source.fixAll.eslint": "always",
-    }
+    },
+    "json.schemas": [
+        {
+            "fileMatch": [
+                "/src/**/manifest.v3.chrome.json"
+            ],
+            "url": "https://json.schemastore.org/chrome-manifest"
+        }
+    ]
 }

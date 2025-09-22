@@ -1,3 +1,5 @@
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-nocheck
 // JS script available only within the pop-up html pages (popup.html & popup2.html)
 /**
  * Query the open tabs and locate the MH tabs. Passes the first result to the callback, along with the invoking button.

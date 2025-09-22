@@ -4,11 +4,11 @@ import {viewingAttributesSchema} from "./viewingAttributes";
 import {questsSchema} from "./quests";
 
 export const userSchema = z.object({
-    user_id: z.number(),
+    user_id: z.coerce.number(),
     sn_user_id: z.coerce.string(),
     unique_hash: z.string(),
-    num_active_turns: z.number(),
-    next_activeturn_seconds: z.number(),
+    num_active_turns: z.coerce.number(),
+    next_activeturn_seconds: z.coerce.number(),
     base_name: z.string(),
     base_item_id: z.coerce.number(),
     weapon_name: z.string(),
