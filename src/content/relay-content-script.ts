@@ -1,5 +1,5 @@
 import { ConsoleLogger } from "@scripts/util/logger";
-import { Message, MessageType, AjaxXhrParams } from "./messaging/message";
+import { AjaxRequestParams, AjaxResponseParams, Message, MessageType } from "./messaging/message";
 import { MessageWithMetadata, Messenger } from "./messaging/messenger";
 
 /*
@@ -23,15 +23,15 @@ async function handlePageScriptMessage(
 
     logger.info("Content Script: Handle message from page-script", message);
     try {
-        if (message.type === MessageType.BeforeAjaxRequestRequest) {
-            return handleBeforeAjaxRequestRequestMessage(
+        if (message.type === MessageType.BeforeFetchRequest) {
+            return handleBeforeFetchRequestMessage(
                 requestId,
                 message.data
             );
         }
 
-        if (message.type === MessageType.AfterAjaxResponseRequest) {
-            return handleAfterAjaxReponseRequestMessage(
+        if (message.type === MessageType.AfterFetchRequest) {
+            return handleAfterFetchRequestMessage(
                 requestId,
                 message.data
             );
@@ -44,26 +44,26 @@ async function handlePageScriptMessage(
     }
 }
 
-async function handleBeforeAjaxRequestRequestMessage(
+async function handleBeforeFetchRequestMessage(
     requestId: string,
-    data: AjaxXhrParams
+    data: AjaxRequestParams
 ): Promise<Message | undefined> {
 
-    return respondToAjaxEvent(
-        "mousehuntAjaxRequest",
-        MessageType.BeforeAjaxRequestResponse,
+    return responseToFetchEvent(
+        "mouseHuntFetchRequest",
+        MessageType.BeforeFetchResponse,
         requestId,
         data
     );
 }
 
-async function handleAfterAjaxReponseRequestMessage(
+async function handleAfterFetchRequestMessage(
     requestId: string,
-    data: AjaxXhrParams
+    data: AjaxRequestParams
 ): Promise<Message | undefined> {
-    return respondToAjaxEvent(
-        "mousehuntAjaxResponse",
-        MessageType.AfterAjaxResponseResponse,
+    return responseToFetchEvent(
+        "mouseHuntFetchResponse",
+        MessageType.AfterFetchResponse,
         requestId,
         data
     );
@@ -74,19 +74,20 @@ async function handleAfterAjaxReponseRequestMessage(
  * ajax request/response and returns the result.
  *
  * @param command - The command to send to the extension.
- * @param type - The type of message, either BeforeAjaxRequestResponse or AfterAjaxResponseResponse.
+ * @param type - The type of message, either BeforeFetchResponse or AfterFetchResponse.
  * @param requestId - The request ID of the message.
  * @param data - Data associated with the ajax request.
  */
-async function respondToAjaxEvent(
+async function responseToFetchEvent(
     command: string,
     type:
-        | MessageType.BeforeAjaxRequestResponse
-        | MessageType.AfterAjaxResponseResponse,
+        | typeof MessageType.BeforeFetchResponse
+        | typeof MessageType.AfterFetchResponse,
     requestId: string,
-    data: AjaxXhrParams
+    data: AjaxRequestParams | AjaxResponseParams
 ): Promise<Message | undefined> {
 
+    data.url = new URL(data.url); // Ensure URL is a URL object
     const result = await sendExtensionMessage(command, { data, requestId });
 
     if (result && result.error !== undefined) {

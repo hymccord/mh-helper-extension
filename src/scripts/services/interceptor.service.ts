@@ -5,6 +5,7 @@ import {hgResponseSchema, type HgResponse} from '@scripts/types/hg';
 import {LoggerService} from '@scripts/util/logger';
 import qs from 'qs';
 import {Emitter, Listener} from 'strict-event-emitter';
+import z from 'zod';
 
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
 export type InterceptorEventMap = {
@@ -20,6 +21,7 @@ export type InterceptorEventMap = {
             url: URL;
             request: RequestBody;
             response: HgResponse;
+            requestId: string;
         }
     ],
 }
@@ -62,7 +64,7 @@ export class InterceptorService {
         return this;
     }
 
-    async emitAsync<EventName extends keyof InterceptorEventMap>(
+    private async emitAsync<EventName extends keyof InterceptorEventMap>(
         eventName: EventName,
         ...data: InterceptorEventMap[EventName]): Promise<void> {
         const listeners = this.emitter.listeners(eventName);
@@ -77,7 +79,7 @@ export class InterceptorService {
         }
     }
 
-    async handleRequest(request: Request, requestId: string): Promise<void> {
+    private async handleRequest(request: Request, requestId: string): Promise<void> {
         if (!this.isSupportedRequest(request)) {
             return;
         }
@@ -86,9 +88,15 @@ export class InterceptorService {
         const body = qs.parse(await requestClone.text());
 
         this.logger.debug(`Emitting request: ${request.url}`, body, requestId, requestClone);
+
+        await this.emitAsync('request', {
+            url: new URL(request.url),
+            request: body,
+            requestId: requestId,
+        });
     }
 
-    async handleResponse(response: Response, request: Request, requestId: string) {
+    private async handleResponse(response: Response, request: Request, requestId: string) {
         if (!this.isSupportedRequest(request) || !this.isSupportedResponse(response)) {
             return;
         }
@@ -98,7 +106,7 @@ export class InterceptorService {
 
         const responseBody = hgResponseSchema.safeParse(await responseClone.json());
         if (!responseBody.success) {
-            this.logger.error(`Response ${response.url}`, responseBody.error, requestId, responseClone);
+            this.logger.error(`Response ${response.url}`, z.prettifyError(responseBody.error), requestId, responseClone);
             return;
         }
         const responseData = responseBody.data;
@@ -112,18 +120,27 @@ export class InterceptorService {
             url: new URL(response.url),
             response: responseData,
             request: requestBody,
+            requestId: requestId,
         });
 
     }
 
-    isSupportedRequest(request: Request): boolean {
-        const url = new URL(request.url);
+    private isSupportedUrl(url: string): boolean {
+        const parsedUrl = new URL(url);
 
-        if (url.origin !== 'https://www.mousehuntgame.com') {
+        if (parsedUrl.origin !== 'https://www.mousehuntgame.com') {
             return false;
         }
 
-        if (url.pathname.startsWith('/api/')) {
+        if (parsedUrl.pathname.startsWith('/api/')) {
+            return false;
+        }
+
+        return true;
+    }
+
+    private isSupportedRequest(request: Request): boolean {
+        if (!this.isSupportedUrl(request.url)) {
             return false;
         }
 
@@ -135,14 +152,8 @@ export class InterceptorService {
         return true;
     }
 
-    isSupportedResponse(response: Response): boolean {
-        const url = new URL(response.url);
-
-        if (url.origin !== 'https://www.mousehuntgame.com') {
-            return false;
-        }
-
-        if (url.pathname.startsWith('/api/')) {
+    private isSupportedResponse(response: Response): boolean {
+        if (!this.isSupportedUrl(response.url)) {
             return false;
         }
 

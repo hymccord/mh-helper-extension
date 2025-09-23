@@ -2,6 +2,7 @@ import { LoggerService } from "@scripts/util/logger";
 import { IAjaxInterceptorService } from "../../background/ajaxInterceptor.background";
 import { Subject } from "rxjs";
 import { HgResponse, hgResponseSchema } from "@scripts/types/hg";
+import { RequestBody } from "./interceptor.service";
 
 /**
  * Service to handle fetching per-hunt user data.
@@ -27,14 +28,14 @@ export class HuntPrefetchService {
     init() {
         const activeTurnFilter = (url: URL) => url.pathname === "/managers/ajax/turns/activeturn.php";
 
-        this.ajaxInterceptorService.subscribe('ajaxRequest', async ({requestId, url, params}) => {
-            if (activeTurnFilter(url)) {
-                await this.huntRequestObserver(requestId, params);
+        this.ajaxInterceptorService.subscribe('ajaxRequest', async ({requestId, url, request}) => {
+            if (activeTurnFilter(new URL(url))) {
+                await this.huntRequestObserver(requestId, request);
             }
         });
 
         this.ajaxInterceptorService.subscribe('ajaxResponse', async ({requestId, url, response}) => {
-            if (activeTurnFilter(url)) {
+            if (activeTurnFilter(new URL(url))) {
                 await this.huntResponseObserver(requestId, response);
             }
         });
@@ -42,20 +43,20 @@ export class HuntPrefetchService {
 
     private async huntRequestObserver(
         requestId: string,
-        params: Record<string, string>
+        request: RequestBody
     ) {
-        if (await this.fetchPrehuntData(params)) {
+        if (await this.fetchPrehuntData(request)) {
             this.logger.debug("Fetched prehunt data", requestId);
             this.preHuntRequestId = requestId;
         }
 
         this.logger.debug("Hunt intake got request", {
             requestId,
-            params,
+            request,
         });
     }
 
-    private async fetchPrehuntData(params: Record<string, string>): Promise<boolean> {
+    private async fetchPrehuntData(request: RequestBody): Promise<boolean> {
         this.logger.debug("Fetching prehunt data");
         performance.mark("fetch-prehunt-data");
 
@@ -65,12 +66,12 @@ export class HuntPrefetchService {
                 {
                     method: "POST",
                     body: new URLSearchParams({
-                        sn: params.sn,
-                        hg_is_ajax: params.hg_is_ajax,
+                        sn: request.sn as string,
+                        hg_is_ajax: request.hg_is_ajax as string,
                         page_class: "Camp",
                         last_read_journal_entry_id:
-                            params.last_read_journal_entry_id,
-                        uh: params.uh,
+                            request.last_read_journal_entry_id as string,
+                        uh: request.uh as string,
                     }),
                 }
             );

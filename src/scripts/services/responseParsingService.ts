@@ -18,21 +18,14 @@ export class ResponseParsingService {
     private async parseResponse(
         requestId: string,
         url: URL,
-        response: unknown
+        response: HgResponse | undefined
     ) {
-        const hgResponse = await hgResponseSchema.safeParseAsync(response);
-
-        if (hgResponse.success) {
-            this.logger.debug("Parsed hgResponse", requestId, hgResponse.data);
-            this.hgResponse.next({
-                requestId: requestId,
-                url: url,
-                data: hgResponse.data,
-            });
-        } else {
-            const message = hgResponse.error.message;
-            this.logger.warn("Failed to parse a hgResponse", requestId, { error: message });
+        if (response == null) {
+            this.logger.warn("HG response parsing: No response", requestId, url);
+            return;
         }
+
+        this.hgResponse.next({requestId: requestId, url: url, data: response}); // Emit early for logging
     }
 }
 

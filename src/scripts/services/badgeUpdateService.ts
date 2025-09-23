@@ -21,6 +21,8 @@ export class BadgeUpdateService {
     }
 
     private handleResponse(hgResponse: HgResponse) {
+        this.logger.debug("Badge update check");
+
         if (!this.updateBadge) {
             return;
         }

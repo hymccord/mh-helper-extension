@@ -41,7 +41,7 @@
     "start:chrome": "web-ext run --start-url https://www.mousehuntgame.com -t chromium --source-dir dist/chrome",
     "start:firefox": "web-ext run --start-url https://www.mousehuntgame.com --source-dir dist/firefox",
     "build": "npm run build:chrome",
-    "build:watch": "npm run build:chrome:watch",
+    "build:watch": "npm run build:watch:chrome",
     "build:chrome": "cross-env BROWSER=chrome webpack",
     "build:firefox": "cross-env BROWSER=firefox webpack",
     "build:watch:chrome": "npm run build:chrome -- --watch",

@@ -55,22 +55,22 @@ module.exports = () => {
         },
         plugins: [
             new ForkTsCheckerWebpackPlugin(),
-            // new HtmlWebpackPlugin({
-            //     template: './src/options.html',
-            //     filename: 'options.html',
-            //     chunks: [
-            //         'theme',
-            //         'options'
-            //     ],
-            // }),
-            // new HtmlWebpackPlugin({
-            //     template: './src/popup.html',
-            //     filename: 'popup.html',
-            //     chunks: [
-            //         'theme',
-            //         'popup'
-            //     ],
-            // }),
+            new HtmlWebpackPlugin({
+                template: './src/options/options.html',
+                filename: 'options.html',
+                chunks: [
+                    'theme',
+                    'options'
+                ],
+            }),
+            new HtmlWebpackPlugin({
+                template: './src/popup/popup.html',
+                filename: 'popup.html',
+                chunks: [
+                    'theme',
+                    'popup'
+                ],
+            }),
             new CopyWebpackPlugin({
                 patterns: [
                     { from: `./src/manifest.v3.json`, to: 'manifest.json', transform: manifest.transform(browser) },
