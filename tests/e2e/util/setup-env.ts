@@ -18,7 +18,6 @@ beforeAll(async () => {
     nock.disableNetConnect();
     const mainLoaded = setupMain();
     vi
-        .useFakeTimers()
         .setSystemTime(1212121000);
 
     await import('@scripts/main');

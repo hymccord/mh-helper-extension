@@ -1,7 +1,7 @@
 import eslint from '@eslint/js';
 import stylistic from '@stylistic/eslint-plugin';
+import vitest from '@vitest/eslint-plugin';
 import perfectionist from 'eslint-plugin-perfectionist';
-import pluginVitest from 'eslint-plugin-vitest';
 import { defineConfig } from 'eslint/config';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
@@ -66,11 +66,12 @@ export default defineConfig(
     // Test-specific rules
     {
         files: ['**/*.spec.ts'],
+        ...vitest.configs.recommended,
         plugins: {
-            vitest: pluginVitest,
+            vitest: vitest,
         },
         languageOptions: {
-            globals: pluginVitest.environments.env.globals,
+            globals: vitest.environments.env.globals,
         },
         rules: {
             '@typescript-eslint/no-unsafe-argument': 'off',

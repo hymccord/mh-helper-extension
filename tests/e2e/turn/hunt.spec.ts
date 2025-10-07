@@ -3,8 +3,8 @@ import { LoggingAssertions } from '@tests/utility/logging-assertions';
 import nock from 'nock';
 import qs from 'qs';
 
-import MockServer from './util/mockServer';
-import { soundHorn } from './util/soundHorn';
+import MockServer from '../util/mockServer';
+import { soundHorn } from '../util/soundHorn';
 
 describe('MHCT Hunt Submission', () => {
     let server: MockServer;
