@@ -100,6 +100,7 @@
     "webpack-cli": "^6.0.1"
   },
   "dependencies": {
+    "fuzzysort": "^3.1.0",
     "rxjs": "^7.8.2",
     "zod": "^4.3.6"
   }
