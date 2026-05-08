@@ -93,9 +93,7 @@ export default defineConfig(
             '**/dist/**',
             '**/node_modules/**',
             '**/third_party/**',
-            '**/webpack/**',
 
-            '**/webpack.*.js',
             '**/jest.config.js',
         ],
     },
